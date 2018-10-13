@@ -14,6 +14,18 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 
+/**
+ * A class that is responsible for dispatching lifecycle state to the children of the [viewGroup].
+ * To do this, it builds a list of child views sorted according to their visibility level.
+ * Currently visible views, i.e. having at least one pixel that is not overlapped
+ * by other views in layout, belong to level 0. Views at levels greater than 0 cannot have
+ * lifecycle state greater than [Lifecycle.State.CREATED].
+ *
+ * Dispatching happens in two cases:
+ * - when the lifecycle state of the [viewGroup] is changed.
+ * - during a layout pass in the [viewGroup]. Since the layout state of the views may change,
+ * dispatcher rebuilds their visibility levels.
+ */
 internal class ViewLifecycleDispatcher(private val viewGroup: ViewGroup) {
 
     private var lastLayoutLevels = arrayListOf<ViewLevelData>()

@@ -18,7 +18,10 @@ import android.view.ViewGroup
  * - whether it's attached to a window (items in a dynamic ViewGroups like RecyclerView
  * can have a proper lifecycle)
  * - the layout position in the parent ViewGroup if it is a navigation container,
- * i.e. [attachNavigation] was called on it. See [ViewLifecycleDispatcher].
+ * i.e. [attachNavigation] was called on it.
+ *
+ * If you are going to remove the view, don't forget to destroy it,
+ * see [ViewLifecycleOwner] for explanation.
  */
 var View.lifecycleOwner: LifecycleOwner by LazyLifecycleOwnerDelegate {
     ViewLifecycleOwner(this).also {
@@ -26,6 +29,35 @@ var View.lifecycleOwner: LifecycleOwner by LazyLifecycleOwnerDelegate {
     }
 }
     internal set
+
+/**
+ * Mark a [ViewGroup] as a navigation container. You can add and remove views in it without
+ * worrying about destroying them. Lifecycle state is propagated to the children appropriately.
+ * After a configuration change, if a ViewGroup with the same id is found in the hierarchy,
+ * all its direct children will be restored. See [ViewLifecycleDispatcher].
+ */
+fun ViewGroup.attachNavigation() {
+    detachNavigation()
+
+    post {
+        lifecycleOwner // ensure ViewLifecycleOwner is initialised
+        getOrCreateCompanionFragment() // ensure ViewCompanionFragment is attached
+
+        ViewLifecycleDispatcher(this).apply {
+            attach()
+            rawLifecycleOwner?.lifecycle?.dispatcher = this
+            requestLayout()
+        }
+    }
+}
+
+/**
+ * Detach navigation for convenience.
+ */
+fun ViewGroup.detachNavigation() {
+    rawLifecycleOwner?.lifecycle?.dispatcher?.detach()
+    rawLifecycleOwner?.lifecycle?.dispatcher = null
+}
 
 val View.viewModelProvider: ViewModelProvider
     get() {
@@ -45,26 +77,6 @@ var View.arguments: Bundle?
         }
         getOrCreateCompanionFragment().arguments = value
     }
-
-fun ViewGroup.attachNavigation() {
-    detachNavigation()
-
-    post {
-        lifecycleOwner // ensure ViewLifecycleOwner is initialised
-        getOrCreateCompanionFragment() // ensure ViewCompanionFragment is attached
-
-        ViewLifecycleDispatcher(this).apply {
-            attach()
-            rawLifecycleOwner?.lifecycle?.dispatcher = this
-            requestLayout()
-        }
-    }
-}
-
-fun ViewGroup.detachNavigation() {
-    rawLifecycleOwner?.lifecycle?.dispatcher?.detach()
-    rawLifecycleOwner?.lifecycle?.dispatcher = null
-}
 
 fun View.destroy() {
     if (tag === ViewDestroyed) {

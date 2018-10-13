@@ -9,7 +9,7 @@ import android.view.ViewGroup
 import java.io.Serializable
 
 /**
- * ViewCompanionFragment's lifecycle is bound to that of the owning View -
+ * ViewCompanionFragment is a helper fragment and is bound to the owning View -
  * conversely to a fragments framework, where a View is an internal part of a Fragment.
  *
  * Used to provide some Fragment functionality to a View. It holds
