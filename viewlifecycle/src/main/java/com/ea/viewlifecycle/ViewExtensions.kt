@@ -1,4 +1,4 @@
-package com.ea.viewlifecycleowner
+package com.ea.viewlifecycle
 
 import android.arch.lifecycle.Lifecycle
 import android.arch.lifecycle.LifecycleOwner
@@ -26,8 +26,6 @@ var View.lifecycleOwner: LifecycleOwner by LazyLifecycleOwnerDelegate {
     }
 }
     internal set
-
-internal var View.rawLifecycleOwner: ViewLifecycleOwner? by HolderDelegate()
 
 val View.viewModelProvider: ViewModelProvider
     get() {
@@ -130,6 +128,8 @@ internal val View.activity: FragmentActivity
         return c as? FragmentActivity
                 ?: throw IllegalStateException("Could not find FragmentActivity for $this.")
     }
+
+internal var View.rawLifecycleOwner: ViewLifecycleOwner? by HolderDelegate()
 
 internal fun View.getOrCreateCompanionFragment(): ViewCompanionFragment {
     return companionFragment

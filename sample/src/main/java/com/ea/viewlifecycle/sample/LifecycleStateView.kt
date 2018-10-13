@@ -1,4 +1,4 @@
-package com.ea.viewlifecycleowner.sample
+package com.ea.viewlifecycle.sample
 
 import android.arch.lifecycle.GenericLifecycleObserver
 import android.arch.lifecycle.Lifecycle
@@ -9,8 +9,8 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.widget.FrameLayout
 import android.widget.TextView
-import com.ea.viewlifecycleowner.lifecycleOwner
-import com.ea.viewlifecycleowner.viewModelProvider
+import com.ea.viewlifecycle.lifecycleOwner
+import com.ea.viewlifecycle.viewModelProvider
 
 class LifecycleStateView : TextView, GenericLifecycleObserver {
 

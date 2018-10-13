@@ -1,4 +1,4 @@
-package com.ea.viewlifecycleowner
+package com.ea.viewlifecycle
 
 import android.annotation.TargetApi
 import android.arch.lifecycle.Lifecycle

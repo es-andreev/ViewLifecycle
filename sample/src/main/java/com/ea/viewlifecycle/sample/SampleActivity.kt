@@ -1,4 +1,4 @@
-package com.ea.viewlifecycleowner.sample
+package com.ea.viewlifecycle.sample
 
 import android.content.Intent
 import android.graphics.Point
@@ -6,7 +6,7 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.widget.FrameLayout
-import com.ea.viewlifecycleowner.attachNavigation
+import com.ea.viewlifecycle.attachNavigation
 
 class SampleActivity : AppCompatActivity() {
 

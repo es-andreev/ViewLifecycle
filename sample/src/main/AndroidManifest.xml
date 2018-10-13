@@ -1,6 +1,6 @@
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.ea.viewlifecycleowner.sample">
+    package="com.ea.viewlifecycle.sample">
 
     <application
         android:allowBackup="false"

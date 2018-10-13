@@ -1,4 +1,4 @@
-package com.ea.viewlifecycleowner
+package com.ea.viewlifecycle
 
 import java.util.*
 import kotlin.reflect.KProperty

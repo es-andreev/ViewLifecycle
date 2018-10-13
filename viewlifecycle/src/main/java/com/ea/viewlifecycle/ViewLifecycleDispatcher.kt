@@ -1,4 +1,4 @@
-package com.ea.viewlifecycleowner
+package com.ea.viewlifecycle
 
 import android.animation.ValueAnimator
 import android.annotation.TargetApi

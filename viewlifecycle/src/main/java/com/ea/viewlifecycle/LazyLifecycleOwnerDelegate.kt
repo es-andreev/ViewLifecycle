@@ -1,4 +1,4 @@
-package com.ea.viewlifecycleowner
+package com.ea.viewlifecycle
 
 import android.arch.lifecycle.LifecycleOwner
 import android.view.View

@@ -1,4 +1,4 @@
-package com.ea.viewlifecycleowner.sample
+package com.ea.viewlifecycle.sample
 
 import android.content.Context
 import android.graphics.Matrix

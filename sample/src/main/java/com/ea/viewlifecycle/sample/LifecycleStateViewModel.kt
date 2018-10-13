@@ -1,4 +1,4 @@
-package com.ea.viewlifecycleowner.sample
+package com.ea.viewlifecycle.sample
 
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel

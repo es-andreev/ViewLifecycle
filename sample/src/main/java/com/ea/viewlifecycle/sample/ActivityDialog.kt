@@ -1,4 +1,4 @@
-package com.ea.viewlifecycleowner.sample
+package com.ea.viewlifecycle.sample
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity

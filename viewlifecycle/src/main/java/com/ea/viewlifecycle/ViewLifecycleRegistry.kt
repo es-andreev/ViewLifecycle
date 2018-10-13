@@ -1,4 +1,4 @@
-package com.ea.viewlifecycleowner
+package com.ea.viewlifecycle
 
 import android.arch.lifecycle.*
 import android.view.View
@@ -11,6 +11,10 @@ internal class ViewLifecycleRegistry(lifecycleOwner: LifecycleOwner,
     private val viewRef = WeakReference(v)
 
     init {
+        val activityLifecycleObserver = GenericLifecycleObserver { _, event ->
+            viewRef.get()?.post { handleLifecycleEvent(event) }
+        }
+
         val windowAttachListener = object : View.OnAttachStateChangeListener {
             override fun onViewDetachedFromWindow(v: View?) {
                 if (currentState.isAtLeast(Lifecycle.State.INITIALIZED)) {
@@ -26,9 +30,6 @@ internal class ViewLifecycleRegistry(lifecycleOwner: LifecycleOwner,
             }
         }
 
-        val activityLifecycleObserver = GenericLifecycleObserver { _, event ->
-            viewRef.get()?.post { handleLifecycleEvent(event) }
-        }
         val lifecycleObserver = object : LifecycleObserver {
             @OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
             fun onCreate() {
