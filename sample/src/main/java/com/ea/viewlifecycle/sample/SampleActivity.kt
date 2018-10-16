@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.widget.FrameLayout
 import com.ea.viewlifecycle.attachNavigation
+import kotlinx.android.synthetic.main.activity_sample.*
 
 class SampleActivity : AppCompatActivity() {
 
@@ -16,8 +17,8 @@ class SampleActivity : AppCompatActivity() {
         if (savedInstanceState == null) {
             fillView()
         }
-        findViewById<View>(R.id.buttonDialog).setOnClickListener {
-            startActivity(Intent(this, ActivityDialog::class.java))
+        buttonDialog.setOnClickListener {
+            startActivity(Intent(this, DialogActivity::class.java))
         }
     }
 
@@ -29,7 +30,6 @@ class SampleActivity : AppCompatActivity() {
         val minSize = Math.min(point.x, point.y) / (viewsCount + 1)
         val maxSize = Math.min(point.x, point.y)
 
-        val motionView = findViewById<MotionView>(R.id.motionView)
         for (i in 0 until viewsCount) {
             val view = LifecycleStateView(this)
             val size = (minSize + (maxSize - minSize) * i.toFloat() / viewsCount).toInt()
