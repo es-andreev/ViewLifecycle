@@ -1,5 +1,6 @@
 package com.ea.viewlifecycle
 
+import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.arch.lifecycle.Lifecycle
 import android.arch.lifecycle.LifecycleObserver
@@ -7,6 +8,7 @@ import android.arch.lifecycle.OnLifecycleEvent
 import android.content.Context
 import android.os.Build
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.widget.FrameLayout
 
 open class LifecycleFrameLayout : FrameLayout, LifecycleObserver {
@@ -51,5 +53,11 @@ open class LifecycleFrameLayout : FrameLayout, LifecycleObserver {
     }
 
     protected open fun onDestroy() {
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        // prevent underlying views from receiving motion events
+        return true
     }
 }
