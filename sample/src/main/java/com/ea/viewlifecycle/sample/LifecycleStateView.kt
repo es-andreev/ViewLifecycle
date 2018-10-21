@@ -32,29 +32,41 @@ class LifecycleStateView : TextView, GenericLifecycleObserver {
         @Suppress("NON_EXHAUSTIVE_WHEN")
         when (event) {
             Lifecycle.Event.ON_CREATE -> {
-                viewModel = viewModelProvider.get(LifecycleStateViewModel::class.java)
-                viewModel.liveLayoutParams.observe(lifecycleOwner, Observer {
-                    it?.apply {
-                        layoutParams = this
-                        requestLayout()
-                    }
-                })
-                viewModel.liveTranslationX.observe(lifecycleOwner, Observer {
-                    it?.apply { translationX = this }
-                })
-                viewModel.liveTranslationY.observe(lifecycleOwner, Observer {
-                    it?.apply { translationY = this }
-                })
+                onCreate()
             }
 
             Lifecycle.Event.ON_DESTROY -> {
-                // save state in ViewModel
-                viewModel.liveLayoutParams.value = layoutParams as FrameLayout.LayoutParams?
-                viewModel.liveTranslationX.value = translationX
-                viewModel.liveTranslationY.value = translationY
+                onDestroy()
             }
         }
 
+        updateOnStateChanged(source, event)
+    }
+
+    private fun onCreate() {
+        viewModel = viewModelProvider.get(LifecycleStateViewModel::class.java)
+        viewModel.liveLayoutParams.observe(lifecycleOwner, Observer {
+            it?.apply {
+                layoutParams = this
+                requestLayout()
+            }
+        })
+        viewModel.liveTranslationX.observe(lifecycleOwner, Observer {
+            it?.apply { translationX = this }
+        })
+        viewModel.liveTranslationY.observe(lifecycleOwner, Observer {
+            it?.apply { translationY = this }
+        })
+    }
+
+    private fun onDestroy() {
+        // save state in ViewModel
+        viewModel.liveLayoutParams.value = layoutParams as FrameLayout.LayoutParams?
+        viewModel.liveTranslationX.value = translationX
+        viewModel.liveTranslationY.value = translationY
+    }
+
+    private fun updateOnStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
         text = event.name
 
         val state = source.lifecycle.currentState
