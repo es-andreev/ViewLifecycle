@@ -57,7 +57,10 @@ open class LifecycleFrameLayout : FrameLayout, LifecycleObserver {
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        // prevent underlying views from receiving motion events
-        return true
+        if (rawLifecycleOwner?.lifecycle?.currentState?.isAtLeast(Lifecycle.State.RESUMED) != true) {
+            // only resumed views can handle touch events
+            return false
+        }
+        return super.onTouchEvent(event)
     }
 }
