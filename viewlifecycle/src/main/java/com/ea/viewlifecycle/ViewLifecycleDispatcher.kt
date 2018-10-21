@@ -92,12 +92,7 @@ internal class ViewLifecycleDispatcher(private val viewGroup: ViewGroup) {
             }
 
             for (i in 0 until lastLayoutLevels.size) {
-                val viewLevelData = lastLayoutLevels[i]
-                if (viewLevelData.level == 0) {
-                    viewLevelData.view.rawLifecycleOwner?.lifecycle?.forceMarkState(stateToDispatch)
-                } else {
-                    viewLevelData.view.rawLifecycleOwner?.lifecycle?.forceMarkState(Lifecycle.State.CREATED)
-                }
+                lastLayoutLevels[i].updateState(stateToDispatch)
             }
             lastDispatchedState = stateToDispatch
         }
@@ -133,33 +128,27 @@ internal class ViewLifecycleDispatcher(private val viewGroup: ViewGroup) {
         diffResult.dispatchUpdatesTo(object : ListUpdateCallback {
             override fun onChanged(position: Int, count: Int, payload: Any?) {
                 for (index in position until position + count) {
-                    updateStateAt(index)
+                    newLevels
+                            .firstOrNull { it.view == lastLayoutLevels[index].view }
+                            ?.updateState(currentState)
+
                 }
             }
 
             override fun onMoved(fromPosition: Int, toPosition: Int) {
-                updateStateAt(fromPosition)
-                updateStateAt(toPosition)
+                lastLayoutLevels[fromPosition].updateState(currentState)
+                newLevels[toPosition].updateState(currentState)
             }
 
             override fun onInserted(position: Int, count: Int) {
                 for (index in position until position + count) {
-                    updateStateAt(index)
+                    newLevels[index].updateState(currentState)
                 }
             }
 
             override fun onRemoved(position: Int, count: Int) {
                 for (index in position until position + count) {
                     lastLayoutLevels[index].view.destroy()
-                }
-            }
-
-            private fun updateStateAt(position: Int) {
-                val levelData = newLevels[position]
-                if (levelData.level == 0 && levelData.view.isDisplayed) {
-                    levelData.view.rawLifecycleOwner?.lifecycle?.forceMarkState(currentState)
-                } else {
-                    levelData.view.rawLifecycleOwner?.lifecycle?.forceMarkState(Lifecycle.State.CREATED)
                 }
             }
         })
@@ -233,6 +222,15 @@ internal class ViewLifecycleDispatcher(private val viewGroup: ViewGroup) {
     }
 
     private class ViewLevelData(val view: View, val level: Int, val visibility: Int) {
+
+        fun updateState(state: Lifecycle.State) {
+            if (level == 0 && view.isDisplayed) {
+                view.rawLifecycleOwner?.lifecycle?.forceMarkState(state)
+            } else {
+                view.rawLifecycleOwner?.lifecycle?.forceMarkState(Lifecycle.State.CREATED)
+            }
+        }
+
         companion object Factory {
             fun of(view: View, level: Int) = ViewLevelData(view, level, view.visibility)
         }
