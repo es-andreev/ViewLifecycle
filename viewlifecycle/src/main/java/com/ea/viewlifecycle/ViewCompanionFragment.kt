@@ -12,12 +12,9 @@ import java.io.Serializable
  * ViewCompanionFragment is a helper fragment and is bound to the owning View -
  * conversely to a fragments framework, where a View is an internal part of a Fragment.
  *
- * Used to provide some Fragment functionality to a View. It holds
- * - [ViewModel]s for views across configuration changes
- * - arguments
- *
- * Also used to restore navigation into a [owningView], if such a view is
- * found after configuration change.
+ * It's used:
+ * - to access [ViewModel]s for views across configuration changes.
+ * - to restore navigation into a [owningView], if such a view is found after configuration change.
  *
  * Unique per pair [View.javaClass] + [View.getId].
  */
@@ -64,11 +61,15 @@ class ViewCompanionFragment : Fragment() {
                 val stack = stackFromBundle(savedInstanceState)
                 if (stack != null) {
                     stack.forEach {
-                        val viewClass = Class.forName(it.viewClassName)
-                        val view = viewClass.getConstructor(Context::class.java)
-                                .newInstance(activity) as View
-                        view.id = it.id
-                        viewGroup.addView(view)
+                        if (viewGroup.findViewById<View>(it.id) == null) {
+                            val viewClass = Class.forName(it.viewClassName)
+                            val view = viewClass.getConstructor(Context::class.java)
+                                    .newInstance(activity) as View
+                            view.id = it.id
+                            view.arguments = it.args
+
+                            viewGroup.addView(view)
+                        }
                     }
                     viewGroup.attachNavigation()
                 }
@@ -107,10 +108,10 @@ class ViewCompanionFragment : Fragment() {
         private const val STATE_STACK = "stack"
     }
 
-    private data class StackData(val viewClassName: String, val id: Int) : Serializable {
+    private data class StackData(val viewClassName: String, val id: Int, val args: Bundle?) : Serializable {
         companion object {
             fun of(view: View) = StackData(view::class.java.canonicalName
-                    ?: throw RuntimeException("View must be a top level class."), view.id)
+                    ?: throw RuntimeException("View must be a top level class."), view.id, view.arguments)
         }
     }
 }
