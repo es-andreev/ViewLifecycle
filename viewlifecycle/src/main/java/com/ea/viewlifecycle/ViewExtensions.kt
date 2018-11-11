@@ -36,10 +36,10 @@ var View.lifecycleOwner: LifecycleOwner by LazyLifecycleOwnerDelegate {
  * Mark a [ViewGroup] as a navigation container. You can add and remove views in it without
  * worrying about destroying them. Lifecycle state is propagated to the children appropriately.
  * After a configuration change, if a ViewGroup with the same id is found in the hierarchy,
- * all its direct children will be restored. See [ViewLifecycleDispatcher].
+ * all its direct children will be restored. See [ViewGroupLifecycleDispatcher].
  */
 fun ViewGroup.attachNavigation() {
-    if (viewLifecycleDispatcher != null) {
+    if (viewGroupLifecycleDispatcher != null) {
         // already attached
         return
     }
@@ -48,8 +48,8 @@ fun ViewGroup.attachNavigation() {
         lifecycleOwner // ensure ViewLifecycleOwner is initialised
         ViewCompanionFragment.getOrCreate(this) // ensure ViewCompanionFragment is attached
 
-        ViewLifecycleDispatcher(this).apply {
-            viewLifecycleDispatcher = this
+        ViewGroupLifecycleDispatcher(this).apply {
+            viewGroupLifecycleDispatcher = this
             attach()
             requestLayout()
         }
@@ -60,7 +60,7 @@ fun ViewGroup.attachNavigation() {
  * Detach navigation for convenience.
  */
 fun ViewGroup.detachNavigation() {
-    viewLifecycleDispatcher?.detach()
+    viewGroupLifecycleDispatcher?.detach()
     hierarchyLifecycleDispatcher?.detach()
 }
 
@@ -148,7 +148,7 @@ internal val View.root: ViewGroup
 
 internal var View.rawLifecycleOwner: ViewLifecycleOwner? by HolderDelegate()
 
-internal var View.viewLifecycleDispatcher: ViewLifecycleDispatcher? by DispatcherHolderDelegate()
+internal var View.viewGroupLifecycleDispatcher: ViewGroupLifecycleDispatcher? by DispatcherHolderDelegate()
 
 internal var View.hierarchyLifecycleDispatcher: HierarchyLifecycleDispatcher? by HolderDelegate()
 

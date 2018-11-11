@@ -70,7 +70,7 @@ internal class ViewLifecycleRegistry(lifecycleOwner: LifecycleOwner, v: View) : 
     }
 
     private fun doMarkState(state: State) {
-        viewRef.get()?.viewLifecycleDispatcher?.dispatchLifecycleState(state)
+        viewRef.get()?.viewGroupLifecycleDispatcher?.dispatchLifecycleState(state)
         viewRef.get()?.hierarchyLifecycleDispatcher?.dispatchLifecycleState(state)
 
         when (state) {
@@ -89,11 +89,10 @@ internal class ViewLifecycleRegistry(lifecycleOwner: LifecycleOwner, v: View) : 
 
     private fun View.needMarkState(): Boolean {
         val parent = parent as? View
-        // parent with ViewLifecycleDispatcher attached will handle dispatching,
-        // and if there are multiple dispatchers in the hierarchy, their common
-        // parent will also do
+        // lifecycle state of the host activity will be dispatched by lifecycle dispatchers,
+        // if there are any
         return hierarchyLifecycleDispatcher != null ||
-                root.hierarchyLifecycleDispatcher == null && parent?.viewLifecycleDispatcher == null
+                root.hierarchyLifecycleDispatcher == null && parent?.viewGroupLifecycleDispatcher == null
     }
 
     private fun getStateAfter(event: Lifecycle.Event): Lifecycle.State {

@@ -70,7 +70,7 @@ class ViewCompanionFragment : Fragment() {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        if (owningView?.viewLifecycleDispatcher != null) {
+        if (owningView?.viewGroupLifecycleDispatcher != null) {
             val viewGroup = owningView as ViewGroup
             viewGroup.saveStack(outState)
         }

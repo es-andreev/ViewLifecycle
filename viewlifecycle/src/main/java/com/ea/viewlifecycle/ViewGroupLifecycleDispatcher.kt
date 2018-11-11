@@ -18,7 +18,7 @@ import android.view.WindowManager
  * - during a layout pass in the [view]. Since the layout state of the views may change,
  * dispatcher rebuilds their visibility levels.
  */
-internal class ViewLifecycleDispatcher(private val viewGroup: ViewGroup) : LifecycleDispatcher(viewGroup) {
+internal class ViewGroupLifecycleDispatcher(private val viewGroup: ViewGroup) : LifecycleDispatcher(viewGroup) {
 
     private val handler = Handler(Looper.getMainLooper())
 
@@ -58,7 +58,7 @@ internal class ViewLifecycleDispatcher(private val viewGroup: ViewGroup) : Lifec
         super.detach()
         viewGroup.removeOnLayoutChangeListener(layoutListener)
         handler.removeCallbacks(dispatchOnLayoutRun)
-        viewGroup.viewLifecycleDispatcher = null
+        viewGroup.viewGroupLifecycleDispatcher = null
     }
 
     override fun getZSortedViews(): Array<View> {
