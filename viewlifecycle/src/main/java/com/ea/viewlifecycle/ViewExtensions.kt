@@ -39,15 +39,18 @@ var View.lifecycleOwner: LifecycleOwner by LazyLifecycleOwnerDelegate {
  * all its direct children will be restored. See [ViewLifecycleDispatcher].
  */
 fun ViewGroup.attachNavigation() {
-    detachNavigation()
+    if (viewLifecycleDispatcher != null) {
+        // already attached
+        return
+    }
 
     post {
         lifecycleOwner // ensure ViewLifecycleOwner is initialised
-        getOrCreateCompanionFragment() // ensure ViewCompanionFragment is attached
+        ViewCompanionFragment.getOrCreate(this) // ensure ViewCompanionFragment is attached
 
         ViewLifecycleDispatcher(this).apply {
+            viewLifecycleDispatcher = this
             attach()
-            rawLifecycleOwner?.lifecycle?.dispatcher = this
             requestLayout()
         }
     }
@@ -57,19 +60,19 @@ fun ViewGroup.attachNavigation() {
  * Detach navigation for convenience.
  */
 fun ViewGroup.detachNavigation() {
-    rawLifecycleOwner?.lifecycle?.dispatcher?.detach()
-    rawLifecycleOwner?.lifecycle?.dispatcher = null
+    viewLifecycleDispatcher?.detach()
+    hierarchyLifecycleDispatcher?.detach()
 }
 
 val View.viewModelProvider: ViewModelProvider
     get() = viewModelProvider(null)
 
 fun View.viewModelProvider(factory: ViewModelProvider.Factory?): ViewModelProvider {
-    if (!checkLifecycleState(Lifecycle.State.CREATED)) {
+    if (rawLifecycleOwner?.lifecycle?.currentState?.isAtLeast(Lifecycle.State.CREATED) != true) {
         throw IllegalStateException("Cannot create ViewModelProvider until " +
                 "LifecycleOwner is in created state.")
     }
-    return ViewModelProviders.of(getOrCreateCompanionFragment(), factory)
+    return ViewModelProviders.of(ViewCompanionFragment.getOrCreate(this), factory)
 }
 
 var View.arguments: Bundle? by HolderDelegate()
@@ -80,8 +83,6 @@ fun View.destroy() {
     }
 
     if (this is ViewGroup) {
-        detachNavigation()
-
         for (i in 0 until childCount) {
             getChildAt(i).destroy()
         }
@@ -98,21 +99,24 @@ fun View.destroy() {
 
     rawLifecycleOwner?.lifecycle?.forceMarkState(Lifecycle.State.DESTROYED)
 
-    companionFragment?.destroyed = true
+    ViewCompanionFragment.get(this)?.destroyed = true
 
     setTag(id, ViewDestroyed)
 }
 
 fun ViewGroup.removeAndDestroyView(v: View) {
-    if (indexOfChild(v) >= 0) {
-        v.destroy()
+    val index = indexOfChild(v)
+    if (index >= 0) {
+        removeAndDestroyViewAt(index)
     }
-    removeView(v)
 }
 
 fun ViewGroup.removeAndDestroyViewAt(index: Int) {
-    getChildAt(index)?.destroy()
-    removeViewAt(index)
+    removeAndDestroyViews(index, 1)
+}
+
+fun ViewGroup.removeAndDestroyAllViews() {
+    removeAndDestroyViews(0, childCount)
 }
 
 fun ViewGroup.removeAndDestroyViews(start: Int, count: Int) {
@@ -120,10 +124,6 @@ fun ViewGroup.removeAndDestroyViews(start: Int, count: Int) {
         getChildAt(i)?.destroy()
     }
     removeViews(start, count)
-}
-
-fun ViewGroup.removeAndDestroyAllViews() {
-    removeAndDestroyViews(0, childCount)
 }
 
 internal val View.activity: FragmentActivity
@@ -137,38 +137,20 @@ internal val View.activity: FragmentActivity
                 ?: throw IllegalStateException("Could not find FragmentActivity for $this.")
     }
 
+internal val View.root: ViewGroup
+    get() {
+        var parent: View = this
+        while (parent.parent is ViewGroup && (parent.parent as View).context is FragmentActivity) {
+            parent = parent.parent as ViewGroup
+        }
+        return parent as ViewGroup
+    }
+
 internal var View.rawLifecycleOwner: ViewLifecycleOwner? by HolderDelegate()
 
-internal fun View.getOrCreateCompanionFragment(): ViewCompanionFragment {
-    return companionFragment
-            ?: ViewCompanionFragment().also {
-                if (id == View.NO_ID) {
-                    if (!checkLifecycleState(Lifecycle.State.CREATED)) {
-                        throw IllegalStateException("View doesn't have an id and " +
-                                "lifecycle is not in created state yet.")
-                    }
-                    id = generateViewId()
-                }
+internal var View.viewLifecycleDispatcher: ViewLifecycleDispatcher? by DispatcherHolderDelegate()
 
-                it.owningView = this
-                activity.supportFragmentManager
-                        .beginTransaction()
-                        .add(it, companionFragmentTag)
-                        .commitNowAllowingStateLoss()
-            }
-}
-
-internal fun View.checkLifecycleState(state: Lifecycle.State): Boolean {
-    val currentState = rawLifecycleOwner?.lifecycle?.currentState
-    return currentState?.isAtLeast(state) == true
-}
-
-internal val View.companionFragment: ViewCompanionFragment?
-    get() = activity.supportFragmentManager.findFragmentByTag(companionFragmentTag)
-            as? ViewCompanionFragment
-
-internal val View.companionFragmentTag: String
-    get() = "Companion fragment for ${javaClass.canonicalName} : $id"
+internal var View.hierarchyLifecycleDispatcher: HierarchyLifecycleDispatcher? by HolderDelegate()
 
 internal val View.isDisplayed: Boolean
     get() = ViewCompat.isAttachedToWindow(this) && visibility != View.GONE
@@ -177,7 +159,7 @@ internal object ViewDestroyed
 
 private val sNextGeneratedId = AtomicInteger(1)
 // copy-paste from ViewCompat for old support library versions
-private fun generateViewId(): Int {
+internal fun generateViewId(): Int {
     @Suppress("LiftReturnOrAssignment")
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
         return View.generateViewId()

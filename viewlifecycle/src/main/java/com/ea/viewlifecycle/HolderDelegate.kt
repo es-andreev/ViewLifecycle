@@ -1,17 +1,20 @@
 package com.ea.viewlifecycle
 
+import android.support.annotation.CallSuper
+import android.view.View
 import java.util.*
 import kotlin.reflect.KProperty
 
-internal class HolderDelegate<T> {
+internal open class HolderDelegate<T> {
 
-    private val values = WeakHashMap<Any, T?>()
+    protected val values = WeakHashMap<Any, T?>()
 
-    operator fun getValue(thisRef: Any, property: KProperty<*>): T? = synchronized(values) {
+    operator fun getValue(thisRef: View, property: KProperty<*>): T? = synchronized(values) {
         return values[thisRef]
     }
 
-    operator fun setValue(thisRef: Any, property: KProperty<*>, value: T?) {
+    @CallSuper
+    open operator fun setValue(thisRef: View, property: KProperty<*>, value: T?) {
         if (value == null) {
             values.remove(thisRef)
         } else {

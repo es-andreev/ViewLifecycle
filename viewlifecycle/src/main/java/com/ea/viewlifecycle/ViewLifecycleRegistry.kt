@@ -2,12 +2,11 @@ package com.ea.viewlifecycle
 
 import android.arch.lifecycle.*
 import android.view.View
+import android.view.ViewGroup
 import java.lang.ref.WeakReference
 
-internal class ViewLifecycleRegistry(lifecycleOwner: LifecycleOwner,
-                                     v: View) : LifecycleRegistry(lifecycleOwner) {
+internal class ViewLifecycleRegistry(lifecycleOwner: LifecycleOwner, v: View) : LifecycleRegistry(lifecycleOwner) {
 
-    internal var dispatcher: ViewLifecycleDispatcher? = null
     private val viewRef = WeakReference(v)
 
     init {
@@ -40,11 +39,14 @@ internal class ViewLifecycleRegistry(lifecycleOwner: LifecycleOwner,
             @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
             fun onDestroy() {
                 val view = viewRef.get()
+
+                (view as? ViewGroup)?.detachNavigation()
+                view?.rawLifecycleOwner = null
+                view?.lifecycleOwner = LazyLifecycleOwnerDelegate.NullLifecycleOwner
+
                 view?.removeOnAttachStateChangeListener(windowAttachListener)
                 view?.activity?.lifecycle?.removeObserver(activityLifecycleObserver)
                 removeObserver(this)
-
-                view?.lifecycleOwner = LazyLifecycleOwnerDelegate.NullLifecycleOwner
             }
         }
 
@@ -58,8 +60,7 @@ internal class ViewLifecycleRegistry(lifecycleOwner: LifecycleOwner,
     }
 
     override fun markState(state: State) {
-        val parent = viewRef.get()?.parent as? View
-        if (parent?.rawLifecycleOwner?.lifecycle?.dispatcher == null) {
+        if (viewRef.get()?.needMarkState() == true) {
             doMarkState(state)
         }
     }
@@ -69,12 +70,11 @@ internal class ViewLifecycleRegistry(lifecycleOwner: LifecycleOwner,
     }
 
     private fun doMarkState(state: State) {
-        when (state) {
-            State.DESTROYED -> {
-                super.markState(state)
-                viewRef.get()?.rawLifecycleOwner = null
-            }
+        viewRef.get()?.viewLifecycleDispatcher?.dispatchLifecycleState(state)
+        viewRef.get()?.hierarchyLifecycleDispatcher?.dispatchLifecycleState(state)
 
+        when (state) {
+            State.DESTROYED,
             State.INITIALIZED,
             State.CREATED -> super.markState(state)
 
@@ -85,8 +85,15 @@ internal class ViewLifecycleRegistry(lifecycleOwner: LifecycleOwner,
                 }
             }
         }
+    }
 
-        dispatcher?.dispatchLifecycleState(state)
+    private fun View.needMarkState(): Boolean {
+        val parent = parent as? View
+        // parent with ViewLifecycleDispatcher attached will handle dispatching,
+        // and if there are multiple dispatchers in the hierarchy, their common
+        // parent will also do
+        return hierarchyLifecycleDispatcher != null ||
+                root.hierarchyLifecycleDispatcher == null && parent?.viewLifecycleDispatcher == null
     }
 
     private fun getStateAfter(event: Lifecycle.Event): Lifecycle.State {
