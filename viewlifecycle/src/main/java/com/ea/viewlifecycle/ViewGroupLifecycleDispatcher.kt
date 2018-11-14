@@ -14,8 +14,8 @@ import android.view.WindowManager
  * A class that is responsible for dispatching lifecycle state to the children of the [viewGroup].
  *
  * Dispatching happens in two cases:
- * - when the lifecycle state of the [view] is changed.
- * - during a layout pass in the [view]. Since the layout state of the views may change,
+ * - when the lifecycle state of the [viewGroup] is changed.
+ * - during a layout pass in the [viewGroup]. Since the layout state of the views may change,
  * dispatcher rebuilds their visibility levels.
  */
 internal class ViewGroupLifecycleDispatcher(private val viewGroup: ViewGroup) : LifecycleDispatcher(viewGroup) {
