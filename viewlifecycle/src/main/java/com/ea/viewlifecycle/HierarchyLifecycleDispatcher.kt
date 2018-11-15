@@ -2,7 +2,12 @@ package com.ea.viewlifecycle
 
 import android.view.View
 import android.view.ViewGroup
+import java.util.*
+import kotlin.collections.ArrayList
 
+/**
+ * A lifecycle dispatcher that handles multiple [ViewGroupLifecycleDispatcher]s.
+ */
 internal class HierarchyLifecycleDispatcher(private val rootView: ViewGroup) : LifecycleDispatcher(rootView) {
 
     private var viewGroups: ArrayList<ViewGroup> = arrayListOf()
@@ -93,10 +98,38 @@ internal class HierarchyLifecycleDispatcher(private val rootView: ViewGroup) : L
                 } else if (!v2HasViews && v1HasViews) {
                     -1
                 } else {
-                    // TODO hierarchy position sort
-                    -1
+                    val v1Level = v1.hierarchyLevel
+                    val v2Level = v2.hierarchyLevel
+                    return v2Level - v1Level
                 }
             }
         }
+
+        private val ViewGroup.hierarchyLevel: Int
+            get() {
+                val stem = ArrayList<ViewGroup>(20)
+
+                var p: ViewGroup? = this
+                while (p is ViewGroup) {
+                    stem.add(p)
+                    p = p.parent as? ViewGroup
+                }
+
+                var parentMax = Int.MAX_VALUE
+                var level = 0
+                for (i in stem.size - 1 downTo 1) {
+                    val parent = stem[i]
+                    val child = stem[i - 1]
+                    val index = parent.indexOfChild(child)
+                    if (index == -1) {
+                        throw IllegalStateException("Wrong hierarchy state: $parent is not a parent of $child.")
+                    }
+
+                    val step = parentMax / parent.childCount
+                    level += step * index
+                    parentMax = step
+                }
+                return level
+            }
     }
 }
