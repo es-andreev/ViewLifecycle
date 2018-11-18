@@ -78,7 +78,7 @@ fun View.viewModelProvider(factory: ViewModelProvider.Factory?): ViewModelProvid
 var View.arguments: Bundle? by HolderDelegate()
 
 fun View.destroy() {
-    if (getTag(id) === ViewDestroyed) {
+    if (getTag(R.id.view_destroyed) === ViewDestroyed) {
         return
     }
 
@@ -101,7 +101,7 @@ fun View.destroy() {
 
     ViewCompanionFragment.get(this)?.destroyed = true
 
-    setTag(id, ViewDestroyed)
+    setTag(R.id.view_destroyed, ViewDestroyed)
 }
 
 fun ViewGroup.removeAndDestroyView(v: View) {
