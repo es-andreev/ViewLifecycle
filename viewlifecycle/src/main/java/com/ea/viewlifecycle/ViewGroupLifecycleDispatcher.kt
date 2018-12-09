@@ -22,6 +22,15 @@ internal class ViewGroupLifecycleDispatcher(private val viewGroup: ViewGroup) : 
 
     private val handler = Handler(Looper.getMainLooper())
 
+    private val layoutListener = View.OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+        handler.removeCallbacks(dispatchOnLayoutRun)
+        handler.postDelayed(dispatchOnLayoutRun, dispatchDelay)
+    }
+
+    private val dispatchOnLayoutRun = {
+        dispatchLifecycleOnLayout()
+    }
+
     // used to postpone lifecycle state transition in case of layout animations
     private val dispatchDelay: Long
 
@@ -38,37 +47,26 @@ internal class ViewGroupLifecycleDispatcher(private val viewGroup: ViewGroup) : 
         val displayRefreshDelay = 1000f / wm.defaultDisplay.refreshRate
         val animationDelay = ValueAnimator.getFrameDelay()
         dispatchDelay = Math.max(displayRefreshDelay.toLong(), animationDelay) * 2
-    }
 
-    private val layoutListener = View.OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
-        handler.removeCallbacks(dispatchOnLayoutRun)
-        handler.postDelayed(dispatchOnLayoutRun, dispatchDelay)
-    }
-
-    private val dispatchOnLayoutRun = {
-        dispatchLifecycleOnLayout()
-    }
-
-    override fun attach() {
-        super.attach()
         viewGroup.addOnLayoutChangeListener(layoutListener)
     }
 
-    override fun detach() {
-        super.detach()
+    override fun clear() {
+        super.clear()
         viewGroup.removeOnLayoutChangeListener(layoutListener)
         handler.removeCallbacks(dispatchOnLayoutRun)
         viewGroup.viewGroupLifecycleDispatcher = null
     }
 
-    override fun getZSortedViews(): Array<View> {
+    override fun getZSortedViews(): Collection<View> {
         // sort views by z order: top displayed (elevation + z translation) come first
         val zSortedViews = ArrayList<View>()
         for (i in viewGroup.childCount - 1 downTo 0) {
             zSortedViews.add(viewGroup.getChildAt(i))
         }
-        zSortedViews.sortWith(viewLevelComparator)
-        return zSortedViews.toTypedArray()
+        return zSortedViews.apply {
+            sortWith(viewLevelComparator)
+        }
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)

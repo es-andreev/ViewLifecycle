@@ -9,10 +9,12 @@ import android.os.Build
 import android.os.Bundle
 import android.support.v4.app.FragmentActivity
 import android.support.v4.view.ViewCompat
-import android.support.v7.widget.RecyclerView
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import java.util.concurrent.atomic.AtomicInteger
+
+// TODO update doc
 
 /**
  * Obtain a [LifecycleOwner] of the view. View's lifecycle depends on:
@@ -20,17 +22,63 @@ import java.util.concurrent.atomic.AtomicInteger
  * - whether it's attached to a window (items in a dynamic ViewGroups like RecyclerView
  * can have a proper lifecycle)
  * - the layout position in the parent ViewGroup if it is a navigation container,
- * i.e. [attachNavigation] was called on it.
+ * i.e. [attachLifecycleDispatcher] was called on it.
  *
  * If you are going to remove the view, don't forget to destroy it,
  * see [ViewLifecycleOwner] for explanation.
  */
+@Suppress("unused")
 var View.lifecycleOwner: LifecycleOwner by LazyLifecycleOwnerDelegate {
-    ViewLifecycleOwner(this).also {
+    ensureParentLifecycleDispatcherAttached()
+    attachLifecycleOwner()
+}
+    internal set
+
+private fun View.ensureParentLifecycleDispatcherAttached() {
+    if ((parent as? ViewGroup)?.viewGroupLifecycleDispatcher == null) {
+        viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+                val p = parent as? ViewGroup
+                if (p != null && p.viewGroupLifecycleDispatcher == null) {
+                    p.attachLifecycleDispatcher()
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                        viewTreeObserver.removeOnGlobalLayoutListener(this)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        viewTreeObserver.removeGlobalOnLayoutListener(this)
+                    }
+                }
+            }
+        })
+    }
+}
+
+internal fun View.attachLifecycleOwner(): LifecycleOwner {
+    val current = rawLifecycleOwner
+    if (current != null) {
+        // already attached
+        return current
+    }
+
+    setTag(R.id.view_destroyed, null)
+    return ViewLifecycleOwner(this).also {
         rawLifecycleOwner = it
     }
 }
-    internal set
+
+fun ViewGroup.trackNavigation(track: Boolean = true) {
+    setTag(R.id.viewGroup_navigator, if (track) ViewGroupNavigator else null)
+    if (track) {
+        ensureParentLifecycleDispatcherAttached()
+
+        // ensure ViewCompanionFragment is attached
+        ViewCompanionFragment.getOrCreate(this)
+    }
+}
+
+internal val ViewGroup.isTrackingNavigation: Boolean
+    get() = getTag(R.id.viewGroup_navigator) === ViewGroupNavigator
 
 /**
  * Mark a [ViewGroup] as a navigation container. You can add and remove views in it without
@@ -38,19 +86,18 @@ var View.lifecycleOwner: LifecycleOwner by LazyLifecycleOwnerDelegate {
  * After a configuration change, if a ViewGroup with the same id is found in the hierarchy,
  * all its direct children will be restored. See [ViewGroupLifecycleDispatcher].
  */
-fun ViewGroup.attachNavigation() {
+internal fun ViewGroup.attachLifecycleDispatcher() {
     if (viewGroupLifecycleDispatcher != null) {
         // already attached
         return
     }
 
     post {
-        lifecycleOwner // ensure ViewLifecycleOwner is initialised
-        ViewCompanionFragment.getOrCreate(this) // ensure ViewCompanionFragment is attached
+        // ensure ViewLifecycleOwner is initialised
+        attachLifecycleOwner()
 
         ViewGroupLifecycleDispatcher(this).apply {
             viewGroupLifecycleDispatcher = this
-            attach()
             requestLayout()
         }
     }
@@ -59,11 +106,12 @@ fun ViewGroup.attachNavigation() {
 /**
  * Detach navigation for convenience.
  */
-fun ViewGroup.detachNavigation() {
-    viewGroupLifecycleDispatcher?.detach()
-    hierarchyLifecycleDispatcher?.detach()
+internal fun ViewGroup.detachLifecycleDispatcher() {
+    viewGroupLifecycleDispatcher?.clear()
+    hierarchyLifecycleDispatcher?.clear()
 }
 
+@Suppress("unused")
 val View.viewModelProvider: ViewModelProvider
     get() = viewModelProvider(null)
 
@@ -77,7 +125,7 @@ fun View.viewModelProvider(factory: ViewModelProvider.Factory?): ViewModelProvid
 
 var View.arguments: Bundle? by HolderDelegate()
 
-fun View.destroy() {
+internal fun View.destroy() {
     if (getTag(R.id.view_destroyed) === ViewDestroyed) {
         return
     }
@@ -86,15 +134,6 @@ fun View.destroy() {
         for (i in 0 until childCount) {
             getChildAt(i).destroy()
         }
-        if (this is RecyclerView) {
-            adapter = null
-            val destroyablePool = recycledViewPool as? Destroyable
-                    ?: throw RuntimeException("RecyclerView must use " +
-                            "destroyable RecycledViewPool, otherwise memory leaks will occur. " +
-                            "See DestroyableRecycledViewPool.")
-            destroyablePool.destroy()
-            recycledViewPool.clear()
-        }
     }
 
     rawLifecycleOwner?.lifecycle?.forceMarkState(Lifecycle.State.DESTROYED)
@@ -102,28 +141,6 @@ fun View.destroy() {
     ViewCompanionFragment.get(this)?.destroyed = true
 
     setTag(R.id.view_destroyed, ViewDestroyed)
-}
-
-fun ViewGroup.removeAndDestroyView(v: View) {
-    val index = indexOfChild(v)
-    if (index >= 0) {
-        removeAndDestroyViewAt(index)
-    }
-}
-
-fun ViewGroup.removeAndDestroyViewAt(index: Int) {
-    removeAndDestroyViews(index, 1)
-}
-
-fun ViewGroup.removeAndDestroyAllViews() {
-    removeAndDestroyViews(0, childCount)
-}
-
-fun ViewGroup.removeAndDestroyViews(start: Int, count: Int) {
-    for (i in start until start + count) {
-        getChildAt(i)?.destroy()
-    }
-    removeViews(start, count)
 }
 
 internal val View.activity: FragmentActivity
@@ -157,6 +174,8 @@ internal val View.isDisplayed: Boolean
 
 internal object ViewDestroyed
 
+internal object ViewGroupNavigator
+
 private val sNextGeneratedId = AtomicInteger(1)
 // copy-paste from ViewCompat for old support library versions
 internal fun generateViewId(): Int {
@@ -177,3 +196,18 @@ internal fun generateViewId(): Int {
         return result
     }
 }
+
+internal val View.stem: ArrayList<ViewGroup>
+    get() {
+        val parents = ArrayList<ViewGroup>(20)
+        var p: ViewGroup? = parent as? ViewGroup
+        val r = root
+        while (p is ViewGroup) {
+            parents.add(p)
+            if (p === r) {
+                break
+            }
+            p = p.parent as? ViewGroup
+        }
+        return parents
+    }

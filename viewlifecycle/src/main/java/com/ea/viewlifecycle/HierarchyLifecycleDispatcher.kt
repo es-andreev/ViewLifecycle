@@ -10,7 +10,7 @@ import kotlin.collections.ArrayList
  */
 internal class HierarchyLifecycleDispatcher(private val rootView: ViewGroup) : LifecycleDispatcher(rootView) {
 
-    private var viewGroups: ArrayList<ViewGroup> = arrayListOf()
+    private var viewGroups = hashSetOf<ViewGroup>()
 
     private val viewGroupComparator = ViewGroupComparator()
 
@@ -24,54 +24,34 @@ internal class HierarchyLifecycleDispatcher(private val rootView: ViewGroup) : L
         }
     }
 
+    init {
+        rootView.hierarchyLifecycleDispatcher = this
+        rootView.attachLifecycleOwner()
+    }
+
     internal fun addViewGroup(viewGroup: ViewGroup) {
-        if (viewGroups.contains(viewGroup)) {
-            return
-        }
-
-        viewGroups.add(viewGroup)
-
-        if (viewGroups.size > 1) {
-            if (viewGroups.size == 2) {
-                rootView.lifecycleOwner
-                rootView.hierarchyLifecycleDispatcher = this
-
-                viewGroups[0].setOnHierarchyChangeListener(hierarchyChangeListener)
-            }
-
+        if (viewGroups.add(viewGroup)) {
             viewGroup.setOnHierarchyChangeListener(hierarchyChangeListener)
             dispatchLifecycleOnLayout()
         }
     }
 
     internal fun removeViewGroup(viewGroup: ViewGroup) {
-        if (!viewGroups.contains(viewGroup)) {
-            return
-        }
-
-        viewGroups.remove(viewGroup)
-        viewGroup.setOnHierarchyChangeListener(null)
-
-        @Suppress("CascadeIf")
-        if (viewGroups.size > 1) {
+        if (viewGroups.remove(viewGroup)) {
+            viewGroup.setOnHierarchyChangeListener(null)
             dispatchLifecycleOnLayout()
-        } else if (viewGroups.size == 1) {
-            viewGroups[0].setOnHierarchyChangeListener(null)
-
-            rootView.hierarchyLifecycleDispatcher = null
         }
     }
 
-    override fun detach() {
-        super.detach()
+    override fun clear() {
+        super.clear()
         viewGroups.forEach { it.setOnHierarchyChangeListener(null) }
         viewGroups.clear()
         rootView.hierarchyLifecycleDispatcher = null
     }
 
-    override fun getZSortedViews(): Array<View> {
-        viewGroups.sortWith(viewGroupComparator)
-        return viewGroups.toTypedArray()
+    override fun getZSortedViews(): Collection<View> {
+        return viewGroups.toSortedSet(viewGroupComparator)
     }
 
     /**
@@ -107,21 +87,18 @@ internal class HierarchyLifecycleDispatcher(private val rootView: ViewGroup) : L
 
         private val ViewGroup.hierarchyLevel: Int
             get() {
-                val stem = ArrayList<ViewGroup>(20)
-
-                var p: ViewGroup? = this
-                while (p is ViewGroup) {
-                    stem.add(p)
-                    p = p.parent as? ViewGroup
+                val fullStem = ArrayList<ViewGroup>(20).apply {
+                    add(this@hierarchyLevel)
+                    addAll(this@hierarchyLevel.stem)
                 }
 
                 var parentMax = Int.MAX_VALUE
                 var level = 0
-                for (i in stem.size - 1 downTo 1) {
-                    val parent = stem[i]
-                    val child = stem[i - 1]
-                    val index = parent.indexOfChild(child)
-                    if (index == -1) {
+                for (i in fullStem.size - 1 downTo 1) {
+                    val parent = fullStem[i]
+                    val child = fullStem[i - 1]
+                    val index = parent.indexOfChild(child) + 1
+                    if (index == 0) {
                         throw IllegalStateException("Wrong hierarchy state: $parent is not a parent of $child.")
                     }
 

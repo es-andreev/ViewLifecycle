@@ -3,7 +3,7 @@ package com.ea.viewlifecycle
 import android.arch.lifecycle.Lifecycle
 import android.view.View
 
-internal class ViewLevelData(val view: View, val level: Int, val visibility: Int) {
+internal data class ViewLevelData(val view: View, val level: Int, val visibility: Int) {
 
     fun updateState(state: Lifecycle.State) {
         if (!state.isAtLeast(Lifecycle.State.STARTED) || level == 0 && view.isDisplayed) {

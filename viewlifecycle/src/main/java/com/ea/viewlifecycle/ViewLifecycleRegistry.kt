@@ -5,46 +5,27 @@ import android.view.View
 import android.view.ViewGroup
 import java.lang.ref.WeakReference
 
+// TODO refactor to root registry
 internal class ViewLifecycleRegistry(lifecycleOwner: LifecycleOwner, v: View) : LifecycleRegistry(lifecycleOwner) {
 
     private val viewRef = WeakReference(v)
 
     init {
         val activityLifecycleObserver = GenericLifecycleObserver { _, event ->
-            viewRef.get()?.post { handleLifecycleEvent(event) }
-        }
-
-        val windowAttachListener = object : View.OnAttachStateChangeListener {
-            override fun onViewDetachedFromWindow(v: View?) {
-                if (currentState.isAtLeast(Lifecycle.State.INITIALIZED)) {
-                    markState(Lifecycle.State.CREATED)
-                }
-            }
-
-            override fun onViewAttachedToWindow(v: View?) {
-                val view = viewRef.get()
-                if (currentState.isAtLeast(Lifecycle.State.INITIALIZED) && view != null) {
-                    markState(view.activity.lifecycle.currentState)
-                }
-            }
+            //            viewRef.get()?.post { handleLifecycleEvent(event) }
+            handleLifecycleEvent(event)
         }
 
         val lifecycleObserver = object : LifecycleObserver {
-            @OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
-            fun onCreate() {
-                val view = viewRef.get()
-                view?.addOnAttachStateChangeListener(windowAttachListener)
-            }
-
             @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
             fun onDestroy() {
+                // TODO move to doMarkState()
                 val view = viewRef.get()
 
-                (view as? ViewGroup)?.detachNavigation()
+                (view as? ViewGroup)?.detachLifecycleDispatcher()
                 view?.rawLifecycleOwner = null
                 view?.lifecycleOwner = LazyLifecycleOwnerDelegate.NullLifecycleOwner
 
-                view?.removeOnAttachStateChangeListener(windowAttachListener)
                 view?.activity?.lifecycle?.removeObserver(activityLifecycleObserver)
                 removeObserver(this)
             }
@@ -70,8 +51,8 @@ internal class ViewLifecycleRegistry(lifecycleOwner: LifecycleOwner, v: View) : 
     }
 
     private fun doMarkState(state: State) {
-        viewRef.get()?.viewGroupLifecycleDispatcher?.dispatchLifecycleState(state)
         viewRef.get()?.hierarchyLifecycleDispatcher?.dispatchLifecycleState(state)
+        viewRef.get()?.viewGroupLifecycleDispatcher?.dispatchLifecycleState(state)
 
         when (state) {
             State.DESTROYED,
@@ -88,11 +69,7 @@ internal class ViewLifecycleRegistry(lifecycleOwner: LifecycleOwner, v: View) : 
     }
 
     private fun View.needMarkState(): Boolean {
-        val parent = parent as? View
-        // lifecycle state of the host activity will be dispatched by lifecycle dispatchers,
-        // if there are any
-        return hierarchyLifecycleDispatcher != null ||
-                root.hierarchyLifecycleDispatcher == null && parent?.viewGroupLifecycleDispatcher == null
+        return hierarchyLifecycleDispatcher != null
     }
 
     private fun getStateAfter(event: Lifecycle.Event): Lifecycle.State {

@@ -22,14 +22,10 @@ internal abstract class LifecycleDispatcher(private val view: View) {
 
     private val xy = IntArray(2)
 
-    abstract fun getZSortedViews(): Array<View>
+    abstract fun getZSortedViews(): Collection<View>
 
     @CallSuper
-    internal open fun attach() {
-    }
-
-    @CallSuper
-    internal open fun detach() {
+    internal open fun clear() {
         lastLayoutLevels.clear()
     }
 
@@ -49,8 +45,8 @@ internal abstract class LifecycleDispatcher(private val view: View) {
             }
         }
 
-        for (i in 0 until lastLayoutLevels.size) {
-            lastLayoutLevels[i].updateState(stateToDispatch)
+        lastLayoutLevels.forEach {
+            it.updateState(stateToDispatch)
         }
         lastDispatchedState = stateToDispatch
     }
@@ -69,8 +65,7 @@ internal abstract class LifecycleDispatcher(private val view: View) {
             override fun getNewListSize() = newLevels.size
 
             override fun areContentsTheSame(oldPos: Int, newPos: Int): Boolean {
-                return lastLayoutLevels[oldPos].visibility == newLevels[newPos].visibility &&
-                        lastLayoutLevels[oldPos].level == newLevels[newPos].level
+                return lastLayoutLevels[oldPos] == newLevels[newPos]
             }
 
             override fun areItemsTheSame(oldPos: Int, newPos: Int): Boolean {
@@ -83,14 +78,15 @@ internal abstract class LifecycleDispatcher(private val view: View) {
             override fun onChanged(position: Int, count: Int, payload: Any?) {
                 for (index in position until position + count) {
                     newLevels
-                            .firstOrNull { it.view == lastLayoutLevels[index].view }
+                            .firstOrNull { it.view === lastLayoutLevels[index].view }
                             ?.updateState(currentState)
                 }
             }
 
             override fun onMoved(fromPosition: Int, toPosition: Int) {
-                lastLayoutLevels[fromPosition].updateState(currentState)
-                newLevels[toPosition].updateState(currentState)
+                newLevels
+                        .firstOrNull { it.view === lastLayoutLevels[fromPosition].view }
+                        ?.updateState(currentState)
             }
 
             override fun onInserted(position: Int, count: Int) {
@@ -110,7 +106,7 @@ internal abstract class LifecycleDispatcher(private val view: View) {
         lastDispatchedState = currentState
     }
 
-    private fun buildLayoutLevels(zSortedViews: Array<View>): ArrayList<ViewLevelData> {
+    private fun buildLayoutLevels(zSortedViews: Collection<View>): ArrayList<ViewLevelData> {
         val levelViews = ArrayList<ViewLevelData>()
         val levels = ArrayList<Region>()
 

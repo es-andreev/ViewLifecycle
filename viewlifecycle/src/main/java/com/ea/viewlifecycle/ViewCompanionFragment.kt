@@ -33,7 +33,7 @@ class ViewCompanionFragment : Fragment() {
             if (value) {
                 owningView = null
                 activity?.supportFragmentManager?.beginTransaction()
-                        ?.remove(this)?.commitNowAllowingStateLoss()
+                        ?.remove(this)?.commitAllowingStateLoss()
             }
             field = value
         }
@@ -70,7 +70,7 @@ class ViewCompanionFragment : Fragment() {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        if (owningView?.viewGroupLifecycleDispatcher != null) {
+        if ((owningView as? ViewGroup)?.isTrackingNavigation == true) {
             val viewGroup = owningView as ViewGroup
             viewGroup.saveStack(outState)
         }
@@ -103,7 +103,7 @@ class ViewCompanionFragment : Fragment() {
                     addView(view)
                 }
             }
-            attachNavigation()
+            trackNavigation()
         }
     }
 

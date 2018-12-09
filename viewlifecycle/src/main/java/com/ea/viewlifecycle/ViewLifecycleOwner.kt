@@ -13,7 +13,7 @@ import android.view.ViewGroup
  * in a ViewGroup, you *must* destroy the owning View manually when you no longer need it
  * by calling [View.destroy] or one of [ViewGroup.removeAndDestroyView] extension functions.
  * By not destroying a View with a [ViewLifecycleOwner] or [ViewCompanionFragment] attached,
- * you get a memory leak. If a navigation is attached to a ViewGroup by [ViewGroup.attachNavigation],
+ * you get a memory leak. If a navigation is attached to a ViewGroup by [ViewGroup.attachLifecycleDispatcher],
  * you can remove its direct children regularly, the library will destroy them for you.
  * When destroying a ViewGroup, all its direct and subsequent children are also get destroyed.
  */
