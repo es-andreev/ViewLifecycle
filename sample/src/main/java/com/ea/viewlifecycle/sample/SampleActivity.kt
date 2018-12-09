@@ -6,7 +6,7 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.widget.FrameLayout
-import com.ea.viewlifecycle.attachNavigation
+import com.ea.viewlifecycle.trackNavigation
 import kotlinx.android.synthetic.main.activity_sample.*
 
 class SampleActivity : AppCompatActivity() {
@@ -39,7 +39,7 @@ class SampleActivity : AppCompatActivity() {
             motionView.addView(view, lp)
         }
 
-        motionView.attachNavigation()
+        motionView.trackNavigation()
         return motionView
     }
 }
