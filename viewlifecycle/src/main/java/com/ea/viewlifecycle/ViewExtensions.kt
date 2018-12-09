@@ -143,7 +143,7 @@ internal fun View.destroy() {
     setTag(R.id.view_destroyed, ViewDestroyed)
 }
 
-internal val View.activity: FragmentActivity
+internal val View.safeActivity: FragmentActivity?
     get() {
         var c = context
         while (c !is FragmentActivity && c is ContextWrapper) {
@@ -151,16 +151,20 @@ internal val View.activity: FragmentActivity
         }
 
         return c as? FragmentActivity
-                ?: throw IllegalStateException("Could not find FragmentActivity for $this.")
     }
+
+internal val View.activity: FragmentActivity
+    get() = safeActivity
+            ?: throw IllegalStateException("Could not find FragmentActivity for $this.")
 
 internal val View.root: ViewGroup
     get() {
-        var parent: View = this
-        while (parent.parent is ViewGroup && (parent.parent as View).context is FragmentActivity) {
-            parent = parent.parent as ViewGroup
+        var p = parent as? ViewGroup
+                ?: throw IllegalStateException("View is not attached to a parent.")
+        while (p.parent is ViewGroup && (p.parent as View).safeActivity != null) {
+            p = p.parent as ViewGroup
         }
-        return parent as ViewGroup
+        return p
     }
 
 internal var View.rawLifecycleOwner: ViewLifecycleOwner? by HolderDelegate()
