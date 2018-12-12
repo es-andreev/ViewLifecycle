@@ -47,7 +47,6 @@ internal class HierarchyLifecycleDispatcher(private val rootView: ViewGroup) : L
         super.clear()
         viewGroups.forEach { it.setOnHierarchyChangeListener(null) }
         viewGroups.clear()
-        rootView.hierarchyLifecycleDispatcher = null
     }
 
     override fun getZSortedViews(): Collection<View> {

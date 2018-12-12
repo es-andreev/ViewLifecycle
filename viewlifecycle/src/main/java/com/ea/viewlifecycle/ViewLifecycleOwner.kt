@@ -19,7 +19,7 @@ import android.view.ViewGroup
  */
 internal class ViewLifecycleOwner(view: View) : LifecycleOwner {
 
-    private val lifecycleRegistry = ViewLifecycleRegistry(this, view)
+    private val lifecycleRegistry = ViewLifecycleRegistry.create(this, view)
 
     override fun getLifecycle(): ViewLifecycleRegistry = lifecycleRegistry
 }

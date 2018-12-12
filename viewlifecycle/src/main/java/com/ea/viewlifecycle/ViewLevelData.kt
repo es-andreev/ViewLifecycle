@@ -7,9 +7,9 @@ internal data class ViewLevelData(val view: View, val level: Int, val visibility
 
     fun updateState(state: Lifecycle.State) {
         if (!state.isAtLeast(Lifecycle.State.STARTED) || level == 0 && view.isDisplayed) {
-            view.rawLifecycleOwner?.lifecycle?.forceMarkState(state)
+            view.rawLifecycleOwner?.lifecycle?.markState(state)
         } else {
-            view.rawLifecycleOwner?.lifecycle?.forceMarkState(Lifecycle.State.CREATED)
+            view.rawLifecycleOwner?.lifecycle?.markState(Lifecycle.State.CREATED)
         }
     }
 

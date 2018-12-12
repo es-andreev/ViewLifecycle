@@ -35,29 +35,18 @@ var View.lifecycleOwner: LifecycleOwner by LazyLifecycleOwnerDelegate {
     internal set
 
 private fun View.ensureParentLifecycleDispatcherAttached() {
-    if ((parent as? ViewGroup)?.viewGroupLifecycleDispatcher == null) {
-        viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
-                val p = parent as? ViewGroup
-                if (p != null && p.viewGroupLifecycleDispatcher == null) {
-                    p.attachLifecycleDispatcher()
-
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                        viewTreeObserver.removeOnGlobalLayoutListener(this)
-                    } else {
-                        @Suppress("DEPRECATION")
-                        viewTreeObserver.removeGlobalOnLayoutListener(this)
-                    }
-                }
-            }
-        })
+    if (parent == null) {
+        afterMeasured {
+            (parent as? ViewGroup)?.attachLifecycleDispatcher()
+        }
+    } else {
+        (parent as? ViewGroup)?.attachLifecycleDispatcher()
     }
 }
 
 internal fun View.attachLifecycleOwner(): LifecycleOwner {
     val current = rawLifecycleOwner
     if (current != null) {
-        // already attached
         return current
     }
 
@@ -65,6 +54,11 @@ internal fun View.attachLifecycleOwner(): LifecycleOwner {
     return ViewLifecycleOwner(this).also {
         rawLifecycleOwner = it
     }
+}
+
+internal fun View.detachLifecycleOwner() {
+    lifecycleOwner = LazyLifecycleOwnerDelegate.NullLifecycleOwner
+    rawLifecycleOwner = null
 }
 
 fun ViewGroup.trackNavigation(track: Boolean = true) {
@@ -88,12 +82,10 @@ internal val ViewGroup.isTrackingNavigation: Boolean
  */
 internal fun ViewGroup.attachLifecycleDispatcher() {
     if (viewGroupLifecycleDispatcher != null) {
-        // already attached
         return
     }
 
     post {
-        // ensure ViewLifecycleOwner is initialised
         attachLifecycleOwner()
 
         ViewGroupLifecycleDispatcher(this).apply {
@@ -108,7 +100,10 @@ internal fun ViewGroup.attachLifecycleDispatcher() {
  */
 internal fun ViewGroup.detachLifecycleDispatcher() {
     viewGroupLifecycleDispatcher?.clear()
+    viewGroupLifecycleDispatcher = null
+
     hierarchyLifecycleDispatcher?.clear()
+    hierarchyLifecycleDispatcher = null
 }
 
 @Suppress("unused")
@@ -136,7 +131,7 @@ internal fun View.destroy() {
         }
     }
 
-    rawLifecycleOwner?.lifecycle?.forceMarkState(Lifecycle.State.DESTROYED)
+    rawLifecycleOwner?.lifecycle?.markState(Lifecycle.State.DESTROYED)
 
     ViewCompanionFragment.get(this)?.destroyed = true
 
@@ -157,15 +152,21 @@ internal val View.activity: FragmentActivity
     get() = safeActivity
             ?: throw IllegalStateException("Could not find FragmentActivity for $this.")
 
-internal val View.root: ViewGroup
+internal val View.safeRoot: ViewGroup?
     get() {
-        var p = parent as? ViewGroup
-                ?: throw IllegalStateException("View is not attached to a parent.")
-        while (p.parent is ViewGroup && (p.parent as View).safeActivity != null) {
+        var p = if (this is ViewGroup && parent != null) {
+            this
+        } else {
+            parent as? ViewGroup
+        }
+        while (p?.parent is ViewGroup && (p.parent as View).safeActivity != null) {
             p = p.parent as ViewGroup
         }
         return p
     }
+
+internal val View.root: ViewGroup
+    get() = safeRoot ?: throw IllegalStateException("View is not attached to a parent.")
 
 internal var View.rawLifecycleOwner: ViewLifecycleOwner? by HolderDelegate()
 
@@ -215,3 +216,20 @@ internal val View.stem: ArrayList<ViewGroup>
         }
         return parents
     }
+
+internal inline fun <T : View> T.afterMeasured(crossinline f: T.() -> Unit) {
+    viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+        override fun onGlobalLayout() {
+            if (measuredWidth > 0 && measuredHeight > 0) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    viewTreeObserver.removeOnGlobalLayoutListener(this)
+                } else {
+                    @Suppress("DEPRECATION")
+                    viewTreeObserver.removeGlobalOnLayoutListener(this)
+                }
+
+                f()
+            }
+        }
+    })
+}

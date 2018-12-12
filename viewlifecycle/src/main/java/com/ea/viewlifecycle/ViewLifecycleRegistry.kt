@@ -1,39 +1,16 @@
 package com.ea.viewlifecycle
 
-import android.arch.lifecycle.*
+import android.arch.lifecycle.Lifecycle
+import android.arch.lifecycle.LifecycleOwner
+import android.arch.lifecycle.LifecycleRegistry
 import android.view.View
 import android.view.ViewGroup
 import java.lang.ref.WeakReference
 
-// TODO refactor to root registry
-internal class ViewLifecycleRegistry(lifecycleOwner: LifecycleOwner, v: View) : LifecycleRegistry(lifecycleOwner) {
+internal open class ViewLifecycleRegistry(
+        lifecycleOwner: LifecycleOwner, view: View) : LifecycleRegistry(lifecycleOwner) {
 
-    private val viewRef = WeakReference(v)
-
-    init {
-        val activityLifecycleObserver = GenericLifecycleObserver { _, event ->
-            //            viewRef.get()?.post { handleLifecycleEvent(event) }
-            handleLifecycleEvent(event)
-        }
-
-        val lifecycleObserver = object : LifecycleObserver {
-            @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-            fun onDestroy() {
-                // TODO move to doMarkState()
-                val view = viewRef.get()
-
-                (view as? ViewGroup)?.detachLifecycleDispatcher()
-                view?.rawLifecycleOwner = null
-                view?.lifecycleOwner = LazyLifecycleOwnerDelegate.NullLifecycleOwner
-
-                view?.activity?.lifecycle?.removeObserver(activityLifecycleObserver)
-                removeObserver(this)
-            }
-        }
-
-        v.activity.lifecycle.addObserver(activityLifecycleObserver)
-        addObserver(lifecycleObserver)
-    }
+    protected val viewRef = WeakReference(view)
 
     override fun handleLifecycleEvent(event: Event) {
         val state = getStateAfter(event)
@@ -41,35 +18,27 @@ internal class ViewLifecycleRegistry(lifecycleOwner: LifecycleOwner, v: View) : 
     }
 
     override fun markState(state: State) {
-        if (viewRef.get()?.needMarkState() == true) {
-            doMarkState(state)
-        }
-    }
+        val view = viewRef.get()
 
-    internal fun forceMarkState(state: State) {
-        doMarkState(state)
-    }
-
-    private fun doMarkState(state: State) {
-        viewRef.get()?.hierarchyLifecycleDispatcher?.dispatchLifecycleState(state)
-        viewRef.get()?.viewGroupLifecycleDispatcher?.dispatchLifecycleState(state)
+        view?.viewGroupLifecycleDispatcher?.dispatchLifecycleState(state)
 
         when (state) {
-            State.DESTROYED,
+            State.DESTROYED -> {
+                (view as? ViewGroup)?.detachLifecycleDispatcher()
+                view?.detachLifecycleOwner()
+
+                super.markState(state)
+            }
             State.INITIALIZED,
             State.CREATED -> super.markState(state)
 
             State.STARTED,
             State.RESUMED -> {
-                if (viewRef.get()?.isDisplayed == true) {
+                if (view?.isDisplayed == true) {
                     super.markState(state)
                 }
             }
         }
-    }
-
-    private fun View.needMarkState(): Boolean {
-        return hierarchyLifecycleDispatcher != null
     }
 
     private fun getStateAfter(event: Lifecycle.Event): Lifecycle.State {
@@ -80,6 +49,16 @@ internal class ViewLifecycleRegistry(lifecycleOwner: LifecycleOwner, v: View) : 
             Event.ON_DESTROY -> State.DESTROYED
             Event.ON_ANY -> {
                 throw IllegalArgumentException("Unexpected event value $event.")
+            }
+        }
+    }
+
+    companion object {
+        fun create(lifecycleOwner: LifecycleOwner, view: View): ViewLifecycleRegistry {
+            return if (view.safeRoot == null || view !== view.root) {
+                ViewLifecycleRegistry(lifecycleOwner, view)
+            } else {
+                ViewRootLifecycleRegistry(lifecycleOwner, view)
             }
         }
     }

@@ -55,7 +55,6 @@ internal class ViewGroupLifecycleDispatcher(private val viewGroup: ViewGroup) : 
         super.clear()
         viewGroup.removeOnLayoutChangeListener(layoutListener)
         handler.removeCallbacks(dispatchOnLayoutRun)
-        viewGroup.viewGroupLifecycleDispatcher = null
     }
 
     override fun getZSortedViews(): Collection<View> {
