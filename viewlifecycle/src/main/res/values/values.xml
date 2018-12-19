@@ -2,4 +2,5 @@
 <resources>
     <item name="view_destroyed" type="id" />
     <item name="viewGroup_navigator" type="id" />
+    <item name="subtree_dispatchers" type="id" />
 </resources>

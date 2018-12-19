@@ -52,9 +52,7 @@ internal abstract class LifecycleDispatcher(private val view: View) {
     }
 
     internal fun dispatchLifecycleOnLayout() {
-        val owner = view.rawLifecycleOwner
-                ?: throw IllegalStateException("LifecycleDispatcher is attached " +
-                        "but View's LifecycleOwner is null.")
+        val owner = view.rawLifecycleOwner ?: return
 
         val currentState = owner.lifecycle.currentState
 
@@ -96,9 +94,7 @@ internal abstract class LifecycleDispatcher(private val view: View) {
             }
 
             override fun onRemoved(position: Int, count: Int) {
-                for (index in position until position + count) {
-                    lastLayoutLevels[index].view.destroy()
-                }
+                // removed items should be destroyed by HierarchyLifecycleDispatcher
             }
         })
 

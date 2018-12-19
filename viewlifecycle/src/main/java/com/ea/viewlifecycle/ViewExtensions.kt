@@ -12,6 +12,7 @@ import android.support.v4.view.ViewCompat
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
+import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
 // TODO update doc
@@ -99,11 +100,17 @@ internal fun ViewGroup.attachLifecycleDispatcher() {
  * Detach navigation for convenience.
  */
 internal fun ViewGroup.detachLifecycleDispatcher() {
-    viewGroupLifecycleDispatcher?.clear()
-    viewGroupLifecycleDispatcher = null
+    val v = viewGroupLifecycleDispatcher
+    if (v != null) {
+        v.clear()
+        viewGroupLifecycleDispatcher = null
+    }
 
-    hierarchyLifecycleDispatcher?.clear()
-    hierarchyLifecycleDispatcher = null
+    val h = hierarchyLifecycleDispatcher
+    if (h != null) {
+        h.clear()
+        hierarchyLifecycleDispatcher = null
+    }
 }
 
 @Suppress("unused")
@@ -202,17 +209,30 @@ internal fun generateViewId(): Int {
     }
 }
 
-internal val View.stem: ArrayList<ViewGroup>
+internal val View.innerStem: ArrayList<ViewGroup>
     get() {
-        val parents = ArrayList<ViewGroup>(20)
+        val parents = ArrayList<ViewGroup>()
+        (this as? ViewGroup)?.apply {
+            parents.add(this)
+        }
         var p: ViewGroup? = parent as? ViewGroup
-        val r = root
+        val r = safeRoot
         while (p is ViewGroup) {
-            parents.add(p)
             if (p === r) {
                 break
             }
+            parents.add(p)
             p = p.parent as? ViewGroup
+        }
+        return parents
+    }
+
+internal val View.fullStem: ArrayList<ViewGroup>
+    get() {
+        val parents = ArrayList<ViewGroup>()
+        parents.addAll(innerStem)
+        safeRoot?.apply {
+            parents.add(this)
         }
         return parents
     }
