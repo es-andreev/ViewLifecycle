@@ -23,13 +23,13 @@ import java.util.concurrent.atomic.AtomicInteger
  * - whether it's attached to a window (items in a dynamic ViewGroups like RecyclerView
  * can have a proper lifecycle)
  * - the layout position in the parent ViewGroup if it is a navigation container,
- * i.e. [attachLifecycleDispatcher] was called on it.
+ * i.e. [attachViewGroupLifecycleDispatcher] was called on it.
  *
  * If you are going to remove the view, don't forget to destroy it,
  * see [ViewLifecycleOwner] for explanation.
  */
 @Suppress("unused")
-var View.lifecycleOwner: LifecycleOwner by LazyLifecycleOwnerDelegate {
+var View.lifecycleOwner: LifecycleOwner by ViewLifecycleOwnerDelegate {
     ensureParentLifecycleDispatcherAttached()
     attachLifecycleOwner()
 }
@@ -38,14 +38,14 @@ var View.lifecycleOwner: LifecycleOwner by LazyLifecycleOwnerDelegate {
 private fun View.ensureParentLifecycleDispatcherAttached() {
     if (parent == null) {
         afterMeasured {
-            (parent as? ViewGroup)?.attachLifecycleDispatcher()
+            (parent as? ViewGroup)?.attachViewGroupLifecycleDispatcher()
         }
     } else {
-        (parent as? ViewGroup)?.attachLifecycleDispatcher()
+        (parent as? ViewGroup)?.attachViewGroupLifecycleDispatcher()
     }
 }
 
-internal fun View.attachLifecycleOwner(): LifecycleOwner {
+private fun View.attachLifecycleOwner(): LifecycleOwner {
     val current = rawLifecycleOwner
     if (current != null) {
         return current
@@ -58,7 +58,7 @@ internal fun View.attachLifecycleOwner(): LifecycleOwner {
 }
 
 internal fun View.detachLifecycleOwner() {
-    lifecycleOwner = LazyLifecycleOwnerDelegate.NullLifecycleOwner
+    lifecycleOwner = ViewLifecycleOwnerDelegate.NullLifecycleOwner
     rawLifecycleOwner = null
 }
 
@@ -81,7 +81,7 @@ internal val ViewGroup.isTrackingNavigation: Boolean
  * After a configuration change, if a ViewGroup with the same id is found in the hierarchy,
  * all its direct children will be restored. See [ViewGroupLifecycleDispatcher].
  */
-internal fun ViewGroup.attachLifecycleDispatcher() {
+internal fun ViewGroup.attachViewGroupLifecycleDispatcher() {
     if (viewGroupLifecycleDispatcher != null) {
         return
     }
@@ -99,16 +99,27 @@ internal fun ViewGroup.attachLifecycleDispatcher() {
 /**
  * Detach navigation for convenience.
  */
-internal fun ViewGroup.detachLifecycleDispatcher() {
-    val v = viewGroupLifecycleDispatcher
-    if (v != null) {
-        v.clear()
+internal fun ViewGroup.detachViewGroupLifecycleDispatcher() {
+    val dispatcher = viewGroupLifecycleDispatcher
+    if (dispatcher != null) {
+        dispatcher.clear()
         viewGroupLifecycleDispatcher = null
     }
+}
 
-    val h = hierarchyLifecycleDispatcher
-    if (h != null) {
-        h.clear()
+internal fun ViewGroup.attachHierarchyLifecycleDispatcher() {
+    if (hierarchyLifecycleDispatcher != null) {
+        return
+    }
+
+    attachLifecycleOwner()
+    hierarchyLifecycleDispatcher = HierarchyLifecycleDispatcher(this)
+}
+
+internal fun ViewGroup.detachHierarchyLifecycleDispatcher() {
+    val dispatcher = hierarchyLifecycleDispatcher
+    if (dispatcher != null) {
+        dispatcher.clear()
         hierarchyLifecycleDispatcher = null
     }
 }
@@ -171,9 +182,6 @@ internal val View.safeRoot: ViewGroup?
         }
         return p
     }
-
-internal val View.root: ViewGroup
-    get() = safeRoot ?: throw IllegalStateException("View is not attached to a parent.")
 
 internal var View.rawLifecycleOwner: ViewLifecycleOwner? by HolderDelegate()
 

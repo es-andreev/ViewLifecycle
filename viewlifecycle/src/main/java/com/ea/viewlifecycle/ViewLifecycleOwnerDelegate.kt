@@ -5,7 +5,7 @@ import android.view.View
 import java.util.*
 import kotlin.reflect.KProperty
 
-internal class LazyLifecycleOwnerDelegate(private val initializer: View.() -> LifecycleOwner) {
+internal class ViewLifecycleOwnerDelegate(private val initializer: View.() -> LifecycleOwner) {
 
     private val values = WeakHashMap<View, LifecycleOwner>()
 

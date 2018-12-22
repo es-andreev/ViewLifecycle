@@ -24,7 +24,7 @@ internal open class ViewLifecycleRegistry(
 
         when (state) {
             State.DESTROYED -> {
-                (view as? ViewGroup)?.detachLifecycleDispatcher()
+                (view as? ViewGroup)?.detachViewGroupLifecycleDispatcher()
                 view?.detachLifecycleOwner()
 
                 super.markState(state)
@@ -55,10 +55,10 @@ internal open class ViewLifecycleRegistry(
 
     companion object {
         fun create(lifecycleOwner: LifecycleOwner, view: View): ViewLifecycleRegistry {
-            return if (view.safeRoot == null || view !== view.root) {
-                ViewLifecycleRegistry(lifecycleOwner, view)
-            } else {
+            return if (view === view.safeRoot) {
                 ViewRootLifecycleRegistry(lifecycleOwner, view)
+            } else {
+                ViewLifecycleRegistry(lifecycleOwner, view)
             }
         }
     }
