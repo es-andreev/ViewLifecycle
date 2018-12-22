@@ -119,6 +119,7 @@ internal abstract class LifecycleDispatcher(private val view: View) {
                 if (unionRegion == region) {
                     // view is completely hidden behind the i'th region
                     viewLevel = i + 1
+                    break
                 }
             }
 
