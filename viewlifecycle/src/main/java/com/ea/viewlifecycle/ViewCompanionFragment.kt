@@ -32,8 +32,10 @@ class ViewCompanionFragment : Fragment() {
         set(value) {
             if (value) {
                 owningView = null
-                activity?.supportFragmentManager?.beginTransaction()
-                        ?.remove(this)?.commitAllowingStateLoss()
+                activity.supportFragmentManager
+                        .beginTransaction()
+                        .remove(this)
+                        .commitAllowingStateLoss()
             }
             field = value
         }
