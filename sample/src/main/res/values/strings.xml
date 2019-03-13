@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">Sample</string>
+    <string name="sample_motion">MotionView sample</string>
+    <string name="sample_recycler">RecyclerView sample</string>
     <string name="move_label">Move views to see how their lifecycle state is changing
         depending on their position in the parent ViewGroup and z-order.
         Each view shows the last lifecycle event it received.

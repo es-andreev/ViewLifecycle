@@ -1,4 +1,4 @@
-package com.ea.viewlifecycle.sample
+package com.ea.viewlifecycle.sample.motionview
 
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel

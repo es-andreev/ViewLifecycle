@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="view_lifecycle_state_1" type="id"/>
+    <item name="view_lifecycle_state_2" type="id"/>
+    <item name="view_lifecycle_state_3" type="id"/>
+</resources>

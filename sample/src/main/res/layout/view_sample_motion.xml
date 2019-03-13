@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
+<merge
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:parentTag="android.widget.FrameLayout">
 
-    <com.ea.viewlifecycle.sample.MotionView
+    <com.ea.viewlifecycle.sample.motionview.MotionView
         android:id="@+id/motionView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:layout_margin="@dimen/offset_16"
+        android:layout_weight="1"/>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -33,17 +37,18 @@
                 style="?attr/borderlessButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:minHeight="0dp"
                 android:minWidth="0dp"
+                android:minHeight="0dp"
                 android:text="@string/tap"
                 android:textAllCaps="false"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/offset_16"
                 android:layout_marginLeft="@dimen/offset_8"
-                android:text="@string/tap_label"/>
+                android:layout_marginBottom="@dimen/offset_16"
+                android:text="@string/tap_label"
+                tools:ignore="RtlHardcoded"/>
         </LinearLayout>
     </LinearLayout>
-</FrameLayout>
+</merge>

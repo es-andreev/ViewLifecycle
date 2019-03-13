@@ -1,4 +1,4 @@
-package com.ea.viewlifecycle.sample
+package com.ea.viewlifecycle.sample.motionview
 
 import android.content.Context
 import android.graphics.Matrix
@@ -8,6 +8,9 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
 
+/**
+ * A [FrameLayout] whose children can be moved.
+ */
 class MotionView : FrameLayout {
 
     private var selectedView: View? = null

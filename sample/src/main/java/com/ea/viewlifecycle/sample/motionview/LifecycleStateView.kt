@@ -1,4 +1,4 @@
-package com.ea.viewlifecycle.sample
+package com.ea.viewlifecycle.sample.motionview
 
 import android.arch.lifecycle.GenericLifecycleObserver
 import android.arch.lifecycle.Lifecycle
@@ -10,6 +10,7 @@ import android.util.TypedValue
 import android.widget.FrameLayout
 import android.widget.TextView
 import com.ea.viewlifecycle.lifecycleOwner
+import com.ea.viewlifecycle.sample.R
 import com.ea.viewlifecycle.viewModelProvider
 
 class LifecycleStateView : TextView, GenericLifecycleObserver {
