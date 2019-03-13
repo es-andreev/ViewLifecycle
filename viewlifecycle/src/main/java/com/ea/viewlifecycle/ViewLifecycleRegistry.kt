@@ -5,12 +5,10 @@ import android.arch.lifecycle.LifecycleOwner
 import android.arch.lifecycle.LifecycleRegistry
 import android.view.View
 import android.view.ViewGroup
-import java.lang.ref.WeakReference
 
 internal open class ViewLifecycleRegistry(
-        lifecycleOwner: LifecycleOwner, view: View) : LifecycleRegistry(lifecycleOwner) {
-
-    protected val viewRef = WeakReference(view)
+        lifecycleOwner: LifecycleOwner,
+        private val view: View) : LifecycleRegistry(lifecycleOwner) {
 
     override fun handleLifecycleEvent(event: Event) {
         val state = getStateAfter(event)
@@ -18,26 +16,14 @@ internal open class ViewLifecycleRegistry(
     }
 
     override fun markState(state: State) {
-        val view = viewRef.get()
+        super.markState(state)
 
-        view?.viewGroupLifecycleDispatcher?.dispatchLifecycleState(state)
+        view.viewGroupLifecycleDispatcher?.dispatchLifecycleState(state)
 
-        when (state) {
-            State.DESTROYED -> {
-                (view as? ViewGroup)?.detachViewGroupLifecycleDispatcher()
-                view?.detachLifecycleOwner()
-
-                super.markState(state)
-            }
-            State.INITIALIZED,
-            State.CREATED -> super.markState(state)
-
-            State.STARTED,
-            State.RESUMED -> {
-                if (view?.isDisplayed == true) {
-                    super.markState(state)
-                }
-            }
+        if (state == State.DESTROYED) {
+            (view as? ViewGroup)?.detachViewGroupLifecycleDispatcher()
+            view.detachLifecycleOwner()
+            ViewCompanionFragment.get(view)?.destroyed = true
         }
     }
 

@@ -6,7 +6,8 @@ import android.arch.lifecycle.LifecycleOwner
 import android.view.View
 
 internal class ViewRootLifecycleRegistry(
-        lifecycleOwner: LifecycleOwner, view: View) : ViewLifecycleRegistry(lifecycleOwner, view) {
+        lifecycleOwner: LifecycleOwner,
+        private val view: View) : ViewLifecycleRegistry(lifecycleOwner, view) {
 
     private val activityLifecycleObserver = GenericLifecycleObserver { _, event ->
         handleLifecycleEvent(event)
@@ -14,15 +15,19 @@ internal class ViewRootLifecycleRegistry(
 
     init {
         view.activity.lifecycle.addObserver(activityLifecycleObserver)
+
+        view.afterMeasured {
+            markState(view.activity.lifecycle.currentState)
+        }
     }
 
     override fun markState(state: Lifecycle.State) {
-        viewRef.get()?.hierarchyLifecycleDispatcher?.dispatchLifecycleState(state)
-
         super.markState(state)
 
+        view.hierarchyLifecycleDispatcher?.dispatchLifecycleState(state)
+
         if (state == State.DESTROYED) {
-            viewRef.get()?.activity?.lifecycle?.removeObserver(activityLifecycleObserver)
+            view.safeActivity?.lifecycle?.removeObserver(activityLifecycleObserver)
         }
     }
 }

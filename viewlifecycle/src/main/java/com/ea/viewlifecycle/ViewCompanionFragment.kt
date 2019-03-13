@@ -123,14 +123,10 @@ class ViewCompanionFragment : Fragment() {
             return get(view)
                     ?: ViewCompanionFragment().also {
                         if (view.id == View.NO_ID) {
-                            if ((view.parent as? ViewGroup)?.isTrackingNavigation != true) {
-                                // view must have a unique id at this time, because otherwise
-                                // this ViewCompanionFragment won't be able to find it after
-                                // configuration change and thus will be destroyed.
-                                throw IllegalStateException("View must have an id.")
-                            } else {
-                                view.id = generateViewId()
-                            }
+                            // view must have a unique id at this time, because otherwise
+                            // this ViewCompanionFragment won't be able to find it after
+                            // configuration change and thus will be destroyed.
+                            throw IllegalStateException("View must have an id.")
                         }
 
                         it.owningView = view

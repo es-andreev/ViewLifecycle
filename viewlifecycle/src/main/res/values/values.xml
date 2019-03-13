@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <item name="view_destroyed" type="id" />
     <item name="viewGroup_navigator" type="id" />
     <item name="subtree_dispatchers" type="id" />
+    <item name="level" type="id" />
 </resources>

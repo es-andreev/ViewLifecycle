@@ -3,8 +3,6 @@ package com.ea.viewlifecycle
 import android.arch.lifecycle.Lifecycle
 import android.graphics.Region
 import android.support.annotation.CallSuper
-import android.support.v7.util.DiffUtil
-import android.support.v7.util.ListUpdateCallback
 import android.view.View
 
 /**
@@ -16,8 +14,6 @@ import android.view.View
  */
 internal abstract class LifecycleDispatcher(private val view: View) {
 
-    private var lastLayoutLevels = arrayListOf<ViewLevelData>()
-
     private var lastDispatchedState: Lifecycle.State? = null
 
     private val xy = IntArray(2)
@@ -26,7 +22,6 @@ internal abstract class LifecycleDispatcher(private val view: View) {
 
     @CallSuper
     internal open fun clear() {
-        lastLayoutLevels.clear()
     }
 
     internal fun dispatchLifecycleState(state: Lifecycle.State) {
@@ -37,78 +32,50 @@ internal abstract class LifecycleDispatcher(private val view: View) {
         if (!view.isDisplayed && state.isAtLeast(Lifecycle.State.CREATED)) {
             stateToDispatch = Lifecycle.State.CREATED
         }
-        if (lastLayoutLevels.isEmpty()) {
-            lastLayoutLevels = buildLayoutLevels(getZSortedViews())
-            if (lastLayoutLevels.isEmpty()) {
-                lastDispatchedState = stateToDispatch
-                return
-            }
+        if (stateToDispatch == lastDispatchedState) {
+            return
         }
 
-        lastLayoutLevels.forEach {
+        val newLevels = buildLayoutLevels()
+        if (newLevels.isEmpty()) {
+            lastDispatchedState = stateToDispatch
+            return
+        }
+
+        newLevels.forEach {
             it.updateState(stateToDispatch)
         }
         lastDispatchedState = stateToDispatch
     }
 
-    internal fun dispatchLifecycleOnLayout() {
+    internal open fun dispatchLifecycleOnLayout() {
         val owner = view.rawLifecycleOwner ?: return
 
         val currentState = owner.lifecycle.currentState
 
-        val newLevels = buildLayoutLevels(getZSortedViews())
+        val newLevels = buildLayoutLevels()
 
-        val diffCallback = object : DiffUtil.Callback() {
-            override fun getOldListSize() = lastLayoutLevels.size
-            override fun getNewListSize() = newLevels.size
-
-            override fun areContentsTheSame(oldPos: Int, newPos: Int): Boolean {
-                return lastLayoutLevels[oldPos] == newLevels[newPos]
-            }
-
-            override fun areItemsTheSame(oldPos: Int, newPos: Int): Boolean {
-                return lastLayoutLevels[oldPos].view === newLevels[newPos].view
-            }
+        newLevels.forEach {
+            it.updateState(currentState)
         }
 
-        val diffResult = DiffUtil.calculateDiff(diffCallback, true)
-        diffResult.dispatchUpdatesTo(object : ListUpdateCallback {
-            override fun onChanged(position: Int, count: Int, payload: Any?) {
-                for (index in position until position + count) {
-                    newLevels
-                            .firstOrNull { it.view === lastLayoutLevels[index].view }
-                            ?.updateState(currentState)
-                }
-            }
-
-            override fun onMoved(fromPosition: Int, toPosition: Int) {
-                newLevels
-                        .firstOrNull { it.view === lastLayoutLevels[fromPosition].view }
-                        ?.updateState(currentState)
-            }
-
-            override fun onInserted(position: Int, count: Int) {
-                for (index in position until position + count) {
-                    newLevels[index].updateState(currentState)
-                }
-            }
-
-            override fun onRemoved(position: Int, count: Int) {
-                // removed items should be destroyed by HierarchyLifecycleDispatcher
-            }
-        })
-
-        lastLayoutLevels = newLevels
         lastDispatchedState = currentState
     }
 
-    private fun buildLayoutLevels(zSortedViews: Collection<View>): ArrayList<ViewLevelData> {
-        val levelViews = ArrayList<ViewLevelData>()
+    // TODO must take into account that zSortedViews may contain parents and children -
+    // level 0 views must have level 0 stem
+    protected open fun buildLayoutLevels(): ArrayList<View> {
+        val zSortedViews = getZSortedViews()
+
+        val levelViews = ArrayList<View>()
         val levels = ArrayList<Region>()
+
+        val parentLevel = view.level
 
         zSortedViews.forEach {
             it.getLocationInWindow(xy)
-            val viewRegion = Region(xy[0], xy[1], xy[0] + it.width, xy[1] + it.height)
+            val viewRegion = Region(xy[0], xy[1],
+                    xy[0] + it.width, xy[1] + it.height)
 
             // find view level
             var viewLevel = 0
@@ -127,7 +94,8 @@ internal abstract class LifecycleDispatcher(private val view: View) {
             if (viewLevel >= levels.size) {
                 // view is behind the last level, insert new
                 levels += viewRegion
-                levelViews += ViewLevelData.of(it, levels.size - 1)
+                it.level = levels.size - 1 + parentLevel
+                levelViews += it
             } else {
                 // union view's region with that of its level
                 levels[viewLevel].op(viewRegion, Region.Op.UNION)
@@ -139,7 +107,8 @@ internal abstract class LifecycleDispatcher(private val view: View) {
                         break
                     }
                 }
-                levelViews.add(levelIndex, ViewLevelData.of(it, viewLevel))
+                it.level = viewLevel + parentLevel
+                levelViews.add(levelIndex, it)
             }
         }
 

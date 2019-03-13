@@ -31,6 +31,10 @@ internal class HierarchyLifecycleDispatcher(rootView: ViewGroup) : LifecycleDisp
         }
     }
 
+    init {
+        rootView.level = 0
+    }
+
     internal fun addViewGroup(viewGroup: ViewGroup) {
         if (viewGroups.add(viewGroup)) {
             viewGroup.innerStem.forEach {
@@ -58,7 +62,7 @@ internal class HierarchyLifecycleDispatcher(rootView: ViewGroup) : LifecycleDisp
     }
 
     override fun getZSortedViews(): Collection<View> {
-        return viewGroups.toSortedSet(viewGroupComparator)
+        return viewGroups.sortedWith(viewGroupComparator)
     }
 
     private fun ViewGroup.decrementStemListener(value: Int) {
@@ -79,14 +83,24 @@ internal class HierarchyLifecycleDispatcher(rootView: ViewGroup) : LifecycleDisp
         get() = getTag(R.id.subtree_dispatchers) as? Int ?: 0
         set(value) = setTag(R.id.subtree_dispatchers, maxOf(0, value))
 
-    /**
-     * Sorts ViewGroups in the following order:
-     * - by visibility;
-     * - by children presence;
-     * - by order in the view tree.
-     */
+    override fun buildLayoutLevels(): ArrayList<View> {
+        return super.buildLayoutLevels().apply {
+            forEach { view ->
+                if (view.level == 0) {
+                    view.innerStem.forEach {
+                        it.level = 0
+                    }
+                }
+            }
+        }
+    }
+
     private class ViewGroupComparator : Comparator<ViewGroup> {
         override fun compare(v1: ViewGroup, v2: ViewGroup): Int {
+            if (v1 === v2) {
+                return 0
+            }
+
             val v1Displayed = v1.isDisplayed
             val v2Displayed = v2.isDisplayed
 
@@ -122,7 +136,8 @@ internal class HierarchyLifecycleDispatcher(rootView: ViewGroup) : LifecycleDisp
                     val child = _fullStem[i - 1]
                     val index = parent.indexOfChild(child) + 1
                     if (index == 0) {
-                        throw IllegalStateException("Wrong hierarchy state: $parent is not a parent of $child.")
+                        throw IllegalStateException("Wrong hierarchy state: " +
+                                "$parent is not a parent of $child.")
                     }
 
                     val step = parentMax / parent.childCount
