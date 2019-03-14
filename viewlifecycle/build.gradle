@@ -1,5 +1,31 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
+
+ext {
+    bintrayRepo = 'maven'
+    bintrayName = 'ViewLifecycle'
+
+    publishedGroupId = 'com.eugene'
+    libraryName = 'ViewLifecycle'
+    artifact = 'viewlifecycle'
+
+    libraryDescription = 'Android library for building fragmentless single activity apps based on lifecycle-aware Views.'
+
+    siteUrl = 'https://github.com/es-andreev/ViewLifecycle'
+    gitUrl = 'https://github.com/es-andreev/ViewLifecycle.git'
+
+    libraryVersion = '1.0'
+
+    developerId = 'es-andreev'
+    developerName = 'Eugene Andreyev'
+    developerEmail = 'e.s.andreev.moscow@gmail.com'
+
+    licenseName = 'The Apache Software License, Version 2.0'
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    allLicenses = ["Apache-2.0"]
+}
 
 android {
     compileSdkVersion 28
@@ -12,6 +38,8 @@ android {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlinVersion"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
     implementation "android.arch.lifecycle:extensions:1.1.1"
 }
+
+apply from: 'bintray.gradle'
