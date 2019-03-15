@@ -177,7 +177,7 @@ internal var View.level: Int
     get() = getTag(R.id.level) as? Int ?: 0
     set(value) = setTag(R.id.level, value)
 
-fun View.updateState(state: Lifecycle.State) {
+internal fun View.updateState(state: Lifecycle.State) {
     if (!state.isAtLeast(Lifecycle.State.STARTED) || level == 0 && isDisplayed) {
         rawLifecycleOwner?.lifecycle?.markState(state)
     } else {
