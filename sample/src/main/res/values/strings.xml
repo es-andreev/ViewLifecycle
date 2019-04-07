@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Sample</string>
+    <string name="app_name">ViewLifecycle sample</string>
     <string name="sample_motion">MotionView sample</string>
     <string name="sample_recycler">RecyclerView sample</string>
     <string name="move_label">Move views to see how their lifecycle state is changing
@@ -10,4 +10,7 @@
     <string name="dialog_label">Small dialog goes here</string>
     <string name="tap">Tap</string>
     <string name="tap_label">to show a dialog and see how the lifecycle is responding.</string>
+    <string name="item_x">Item %1$d</string>
+    <string name="started">Started</string>
+    <string name="stopped">Stopped</string>
 </resources>

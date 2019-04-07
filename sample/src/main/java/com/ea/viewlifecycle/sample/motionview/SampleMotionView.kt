@@ -6,7 +6,6 @@ import android.arch.lifecycle.OnLifecycleEvent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.graphics.Point
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.FrameLayout
@@ -14,7 +13,6 @@ import com.ea.viewlifecycle.lifecycleOwner
 import com.ea.viewlifecycle.sample.R
 import com.ea.viewlifecycle.sample.activity
 import kotlinx.android.synthetic.main.view_sample_motion.view.*
-import kotlin.math.min
 
 class SampleMotionView : FrameLayout, LifecycleObserver {
 
@@ -42,27 +40,12 @@ class SampleMotionView : FrameLayout, LifecycleObserver {
     }
 
     private fun fillView() {
-        val viewsCount = 3
-
-        val display = activity.windowManager.defaultDisplay
-        val point = Point()
-        display.getSize(point)
-
-        val offset16 = resources.getDimensionPixelOffset(R.dimen.offset_16)
-        val maxSize = min(point.x, point.y) - offset16 * 2
-        val minSize = maxSize / (viewsCount + 1)
-
         for (i in 0 until viewsCount) {
-            val view = LifecycleStateView(activity)
-            view.id = viewIds[i]
-            val size = (minSize + (maxSize - minSize) * i.toFloat() / viewsCount).toInt()
-            val width = size + (viewsCount - i - 1) * minSize / 4
-            val height = size * 3 / 4
-            val lp = FrameLayout.LayoutParams(width, height)
-            view.translationY = (viewsCount - i - 1) * 3 * offset16.toFloat()
-            view.translationX = (viewsCount - i - 1) * offset16.toFloat()
-
-            motionView.addView(view, lp)
+            val view = LifecycleStateView(activity).apply {
+                id = viewIds[i]
+                index = i
+            }
+            motionView.addView(view)
         }
     }
 
@@ -70,5 +53,9 @@ class SampleMotionView : FrameLayout, LifecycleObserver {
     private fun onStart() {
         activity.title = resources.getString(R.string.sample_motion)
         activity.supportActionBar?.setDisplayHomeAsUpEnabled(true)
+    }
+
+    companion object {
+        const val viewsCount = 3
     }
 }

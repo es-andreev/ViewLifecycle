@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.widget.LinearLayout
 import com.ea.viewlifecycle.lifecycleOwner
 import com.ea.viewlifecycle.sample.motionview.SampleMotionView
+import com.ea.viewlifecycle.sample.recyclerview.SampleRecyclerView
 import kotlinx.android.synthetic.main.view_main.view.*
 
 class MainView : LinearLayout, LifecycleObserver {
@@ -27,6 +28,7 @@ class MainView : LinearLayout, LifecycleObserver {
         }
 
         sampleRecycler.setOnClickListener {
+            navigator.navigateForward(SampleRecyclerView(context))
         }
     }
 
