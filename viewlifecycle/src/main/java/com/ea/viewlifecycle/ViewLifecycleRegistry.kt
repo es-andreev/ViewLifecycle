@@ -1,12 +1,13 @@
 package com.ea.viewlifecycle
 
+import android.arch.lifecycle.GenericLifecycleObserver
 import android.arch.lifecycle.Lifecycle
 import android.arch.lifecycle.LifecycleOwner
 import android.arch.lifecycle.LifecycleRegistry
 import android.view.View
 import android.view.ViewGroup
 
-internal open class ViewLifecycleRegistry(
+internal sealed class ViewLifecycleRegistry(
         lifecycleOwner: LifecycleOwner,
         private val view: View) : LifecycleRegistry(lifecycleOwner) {
 
@@ -39,12 +40,42 @@ internal open class ViewLifecycleRegistry(
         }
     }
 
-    companion object {
+    private class ItemViewLifecycleRegistry(lifecycleOwner: LifecycleOwner, view: View) :
+            ViewLifecycleRegistry(lifecycleOwner, view)
+
+    private class RootViewLifecycleRegistry(
+            lifecycleOwner: LifecycleOwner,
+            private val view: View) : ViewLifecycleRegistry(lifecycleOwner, view) {
+
+        private val activityLifecycleObserver = GenericLifecycleObserver { _, event ->
+            handleLifecycleEvent(event)
+        }
+
+        init {
+            view.activity.lifecycle.addObserver(activityLifecycleObserver)
+
+            view.onAttached {
+                markState(view.activity.lifecycle.currentState)
+            }
+        }
+
+        override fun markState(state: Lifecycle.State) {
+            super.markState(state)
+
+            view.hierarchyLifecycleDispatcher?.dispatchLifecycleState(state)
+
+            if (state == State.DESTROYED) {
+                view.safeActivity?.lifecycle?.removeObserver(activityLifecycleObserver)
+            }
+        }
+    }
+
+    companion object Factory {
         fun create(lifecycleOwner: LifecycleOwner, view: View): ViewLifecycleRegistry {
             return if (view === view.safeRoot) {
-                ViewRootLifecycleRegistry(lifecycleOwner, view)
+                RootViewLifecycleRegistry(lifecycleOwner, view)
             } else {
-                ViewLifecycleRegistry(lifecycleOwner, view)
+                ItemViewLifecycleRegistry(lifecycleOwner, view)
             }
         }
     }

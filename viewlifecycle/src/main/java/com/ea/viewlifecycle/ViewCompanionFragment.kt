@@ -141,7 +141,10 @@ class ViewCompanionFragment : Fragment() {
             get() = "Companion fragment for ${javaClass.canonicalName} : $id"
     }
 
-    private data class StackData(val viewClassName: String, val id: Int, val args: Bundle?) : Parcelable {
+    private data class StackData(
+            val viewClassName: String,
+            val id: Int,
+            val args: Bundle?) : Parcelable {
 
         constructor(parcel: Parcel) : this(
                 parcel.readString()

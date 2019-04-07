@@ -14,55 +14,33 @@ import android.view.View
  */
 internal abstract class LifecycleDispatcher(private val view: View) {
 
-    private var lastDispatchedState: Lifecycle.State? = null
-
     private val xy = IntArray(2)
 
-    abstract fun getZSortedViews(): Collection<View>
+    internal abstract fun getZSortedViews(): Collection<View>
 
     @CallSuper
     internal open fun clear() {
     }
 
     internal fun dispatchLifecycleState(state: Lifecycle.State) {
-        if (state == lastDispatchedState) {
-            return
-        }
-        var stateToDispatch = state
-        if (!view.isDisplayed && state.isAtLeast(Lifecycle.State.CREATED)) {
-            stateToDispatch = Lifecycle.State.CREATED
-        }
-        if (stateToDispatch == lastDispatchedState) {
-            return
-        }
-
         val newLevels = buildLayoutLevels()
         if (newLevels.isEmpty()) {
-            lastDispatchedState = stateToDispatch
             return
         }
 
         newLevels.forEach {
-            it.updateState(stateToDispatch)
+            it.updateState(state)
         }
-        lastDispatchedState = stateToDispatch
     }
 
     internal open fun dispatchLifecycleOnLayout() {
         val owner = view.rawLifecycleOwner ?: return
-
         val currentState = owner.lifecycle.currentState
 
-        val newLevels = buildLayoutLevels()
-
-        newLevels.forEach {
-            it.updateState(currentState)
-        }
-
-        lastDispatchedState = currentState
+        dispatchLifecycleState(currentState)
     }
 
-    // TODO must take into account that zSortedViews may contain parents and children -
+    // must take into account that zSortedViews may contain parents and children -
     // level 0 views must have level 0 stem
     protected open fun buildLayoutLevels(): ArrayList<View> {
         val zSortedViews = getZSortedViews()
@@ -71,14 +49,24 @@ internal abstract class LifecycleDispatcher(private val view: View) {
         val levels = ArrayList<Region>()
 
         val parentLevel = view.level
+        val parentRegion = view.visibleRegion
 
         zSortedViews.forEach {
             it.getLocationInWindow(xy)
             val viewRegion = Region(xy[0], xy[1],
-                    xy[0] + it.width, xy[1] + it.height)
+                    xy[0] + it.measuredWidth, xy[1] + it.measuredHeight)
+
 
             // find view level
             var viewLevel = 0
+
+            if (parentRegion != null) {
+                viewRegion.op(parentRegion, Region.Op.INTERSECT)
+                if (viewRegion.isEmpty) {
+                    viewLevel = 1
+                }
+            }
+
             for (i in levels.size - 1 downTo 0) {
                 val region = levels[i]
                 val unionRegion = Region(region)
@@ -90,11 +78,18 @@ internal abstract class LifecycleDispatcher(private val view: View) {
                 }
             }
 
+            if (viewLevel < levels.size) {
+                it.visibleRegion = Region(viewRegion).apply {
+                    op(levels[viewLevel], Region.Op.XOR)
+                }
+            }
+
+            it.level = viewLevel + parentLevel
+
             // the level is discovered, save it
             if (viewLevel >= levels.size) {
                 // view is behind the last level, insert new
                 levels += viewRegion
-                it.level = levels.size - 1 + parentLevel
                 levelViews += it
             } else {
                 // union view's region with that of its level
@@ -107,7 +102,6 @@ internal abstract class LifecycleDispatcher(private val view: View) {
                         break
                     }
                 }
-                it.level = viewLevel + parentLevel
                 levelViews.add(levelIndex, it)
             }
         }

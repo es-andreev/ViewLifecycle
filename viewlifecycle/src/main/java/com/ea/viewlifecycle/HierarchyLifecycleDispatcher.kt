@@ -31,10 +31,6 @@ internal class HierarchyLifecycleDispatcher(rootView: ViewGroup) : LifecycleDisp
         }
     }
 
-    init {
-        rootView.level = 0
-    }
-
     internal fun addViewGroup(viewGroup: ViewGroup) {
         if (viewGroups.add(viewGroup)) {
             viewGroup.innerStem.forEach {

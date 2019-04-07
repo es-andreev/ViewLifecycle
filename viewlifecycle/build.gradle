@@ -16,7 +16,7 @@ ext {
     siteUrl = 'https://github.com/es-andreev/ViewLifecycle'
     gitUrl = 'https://github.com/es-andreev/ViewLifecycle.git'
 
-    libraryVersion = '1.0'
+    libraryVersion = '1.1'
 
     developerId = 'es-andreev'
     developerName = 'Eugene Andreyev'
@@ -32,7 +32,7 @@ android {
 
     defaultConfig {
         //noinspection MinSdkTooLow
-        minSdkVersion 11
+        minSdkVersion 12
         targetSdkVersion 28
     }
 }

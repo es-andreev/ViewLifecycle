@@ -1,28 +1,20 @@
 package com.ea.viewlifecycle
 
-import android.arch.lifecycle.Lifecycle
-import android.arch.lifecycle.LifecycleOwner
-import android.arch.lifecycle.ViewModelProvider
-import android.arch.lifecycle.ViewModelProviders
+import android.arch.lifecycle.*
 import android.content.ContextWrapper
-import android.os.Build
+import android.graphics.Region
 import android.os.Bundle
 import android.support.v4.app.FragmentActivity
 import android.support.v4.view.ViewCompat
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewTreeObserver
 import java.util.*
-
-// TODO update doc
 
 /**
  * Obtain a [LifecycleOwner] of the view. View's lifecycle depends on:
  * - the lifecycle of the owning activity
- * - whether it's attached to a window (items in a dynamic ViewGroups like RecyclerView
- * can have a proper lifecycle)
- * - the layout position in the parent ViewGroup if it is a navigation container,
- * i.e. [attachViewGroupLifecycleDispatcher] was called on it.
+ * - the lifecycle of the parent ViewGroup
+ * - the layout position in the parent ViewGroup
  */
 @Suppress("unused")
 var View.lifecycleOwner: LifecycleOwner by ViewLifecycleOwnerDelegate {
@@ -32,11 +24,7 @@ var View.lifecycleOwner: LifecycleOwner by ViewLifecycleOwnerDelegate {
     internal set
 
 private fun View.ensureParentLifecycleDispatcherAttached() {
-    if (parent == null) {
-        afterMeasured {
-            (parent as? ViewGroup)?.attachViewGroupLifecycleDispatcher()
-        }
-    } else {
+    onAttached {
         (parent as? ViewGroup)?.attachViewGroupLifecycleDispatcher()
     }
 }
@@ -58,10 +46,9 @@ internal fun View.detachLifecycleOwner() {
 }
 
 /**
- * Mark a [ViewGroup] as a navigation container. You can add and remove views in it without
- * worrying about destroying them. Lifecycle state is propagated to the children appropriately.
- * After a configuration change, if a ViewGroup with the same id is found in the hierarchy,
- * all its direct children will be restored. See [ViewGroupLifecycleDispatcher].
+ * Mark a [ViewGroup] as a navigation container. After a configuration change,
+ * if a ViewGroup with the same id is found in the hierarchy,
+ * all its direct children will be restored.
  */
 fun ViewGroup.trackNavigation(track: Boolean = true) {
     setTag(R.id.viewGroup_navigator, if (track) ViewGroupNavigator else null)
@@ -86,9 +73,6 @@ internal fun ViewGroup.attachViewGroupLifecycleDispatcher() {
     viewGroupLifecycleDispatcher = ViewGroupLifecycleDispatcher(this)
 }
 
-/**
- * Detach navigation for convenience.
- */
 internal fun ViewGroup.detachViewGroupLifecycleDispatcher() {
     val dispatcher = viewGroupLifecycleDispatcher
     if (dispatcher != null) {
@@ -114,19 +98,32 @@ internal fun ViewGroup.detachHierarchyLifecycleDispatcher() {
     }
 }
 
+/**
+ * Obtain a [ViewModelProvider] associated with a View.
+ */
 @Suppress("unused")
 val View.viewModelProvider: ViewModelProvider
     get() = viewModelProvider(null)
 
-fun View.viewModelProvider(factory: ViewModelProvider.Factory?): ViewModelProvider {
+/**
+ * Obtain a [ViewModelProvider] associated with a View.
+ *
+ * @param factory an optional ViewModelProvider.Factory for creating [ViewModel]s.
+ */
+fun View.viewModelProvider(factory: ViewModelProvider.Factory? = null): ViewModelProvider {
     val state = rawLifecycleOwner?.lifecycle?.currentState
     if (state?.isAtLeast(Lifecycle.State.CREATED) != true) {
         throw IllegalStateException("Cannot create ViewModelProvider until " +
                 "LifecycleOwner is in created state.")
     }
-    return ViewModelProviders.of(ViewCompanionFragment.getOrCreate(this), factory)
+    val companionFragment = ViewCompanionFragment.getOrCreate(this)
+    return ViewModelProviders.of(companionFragment, factory)
 }
 
+/**
+ * Access arguments associated with a View.
+ * The arguments are retained across configuration changes.
+ */
 var View.arguments: Bundle? by HolderDelegate()
 
 internal fun View.destroy() {
@@ -177,6 +174,10 @@ internal var View.level: Int
     get() = getTag(R.id.level) as? Int ?: 0
     set(value) = setTag(R.id.level, value)
 
+internal var View.visibleRegion: Region?
+    get() = getTag(R.id.region) as? Region
+    set(value) = setTag(R.id.region, value)
+
 internal fun View.updateState(state: Lifecycle.State) {
     if (!state.isAtLeast(Lifecycle.State.STARTED) || level == 0 && isDisplayed) {
         rawLifecycleOwner?.lifecycle?.markState(state)
@@ -218,19 +219,20 @@ internal val View.fullStem: ArrayList<ViewGroup>
         return parents
     }
 
-internal inline fun <T : View> T.afterMeasured(crossinline f: T.() -> Unit) {
-    viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-        override fun onGlobalLayout() {
-            if (measuredWidth > 0 && measuredHeight > 0) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                    viewTreeObserver.removeOnGlobalLayoutListener(this)
-                } else {
-                    @Suppress("DEPRECATION")
-                    viewTreeObserver.removeGlobalOnLayoutListener(this)
-                }
-
-                f()
+internal inline fun <T : View> T.onAttached(crossinline callback: T.() -> Unit) {
+    if (ViewCompat.isAttachedToWindow(this)) {
+        callback()
+    } else {
+        addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+            override fun onViewDetachedFromWindow(v: View?) {
+                removeOnAttachStateChangeListener(this)
             }
-        }
-    })
+
+            override fun onViewAttachedToWindow(v: View?) {
+                removeOnAttachStateChangeListener(this)
+
+                callback()
+            }
+        })
+    }
 }
