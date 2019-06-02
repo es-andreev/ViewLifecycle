@@ -1,16 +1,18 @@
 # ViewLifecycle
 
 Use plain android Views without Fragments, still having direct access to Lifecycle, ViewModel etc. 
-Navigate with old well-known families of methods ViewGroup.addView and ViewGroup.removeView.
+
+Navigation and back stack are managed by ```BackStackNavigator``` across configuration changes.
 
 ## Usage
 
 Add ViewLifecycle dependency
 ```
-implementation "com.eugene:viewlifecycle:1.1"
+implementation "com.eugene:viewlifecycle:1.2"
 ```
-Use View extension property ```lifecycleOwner``` to access its lifecycle.
-
-Use ViewGroup extension function ```trackNavigation``` to save navigation stack. Its direct children will be restored after configuration change.
+View extensions provided:
+* ```lifecycleOwner``` to access its lifecycle
+* ```viewModelProvider``` and ```viewModelProvider(ViewModelProvider.Factory?)``` for creating ViewModels
+* ```arguments``` similarly to Fragments
 
 See [todo app sample](https://github.com/es-andreev/android-architecture/tree/todo-mvvm-live-kotlin-fragmentless) based on this library.
