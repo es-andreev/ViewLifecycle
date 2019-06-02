@@ -7,7 +7,7 @@ Navigate with old well-known families of methods ViewGroup.addView and ViewGroup
 
 Add ViewLifecycle dependency
 ```
-implementation "com.eugene:viewlifecycle:1.0"
+implementation "com.eugene:viewlifecycle:1.1"
 ```
 Use View extension property ```lifecycleOwner``` to access its lifecycle.
 
