@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <item name="viewGroup_navigator" type="id" />
     <item name="subtree_dispatchers" type="id" />
     <item name="level" type="id" />
     <item name="region" type="id" />
+    <item name="backStackItem" type="id" />
 </resources>

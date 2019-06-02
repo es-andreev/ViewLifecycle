@@ -20,8 +20,7 @@ internal class ViewGroupLifecycleDispatcher(
         viewGroup.addOnLayoutChangeListener(layoutListener)
     }
 
-    override fun clear() {
-        super.clear()
+    internal fun clear() {
         viewGroup.removeOnLayoutChangeListener(layoutListener)
     }
 

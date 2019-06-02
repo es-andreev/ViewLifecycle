@@ -17,14 +17,33 @@ internal sealed class ViewLifecycleRegistry(
     }
 
     override fun markState(state: State) {
-        super.markState(state)
+        try {
+            super.markState(state)
+        } catch (e: IllegalArgumentException) {
+            // This may happen when a view is created, but never actually attached to a window.
+            // Its lifecycle then is destroyed while in INITIALIZED state and exception is thrown.
+        }
 
-        view.viewGroupLifecycleDispatcher?.dispatchLifecycleState(state)
+        (view as? ViewGroup)?.viewGroupLifecycleDispatcher?.dispatchLifecycleState(state)
 
         if (state == State.DESTROYED) {
             (view as? ViewGroup)?.detachViewGroupLifecycleDispatcher()
             view.detachLifecycleOwner()
-            ViewCompanionFragment.get(view)?.destroyed = true
+
+            if (!view.isBackStackItem) {
+                ViewCompanionFragment.get(view)?.apply {
+                    activity.supportFragmentManager
+                            .beginTransaction()
+                            .remove(this)
+                            .commitAllowingStateLoss()
+                }
+            }
+            NavViewCompanionFragment.get(view)?.apply {
+                activity.supportFragmentManager
+                        .beginTransaction()
+                        .remove(this)
+                        .commitAllowingStateLoss()
+            }
         }
     }
 

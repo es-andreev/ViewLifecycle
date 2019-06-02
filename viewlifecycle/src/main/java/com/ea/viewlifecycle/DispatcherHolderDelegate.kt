@@ -6,14 +6,13 @@ import kotlin.reflect.KProperty
 /**
  * Holds views with [ViewGroupLifecycleDispatcher] attached.
  */
-internal class DispatcherHolderDelegate : HolderDelegate<ViewGroupLifecycleDispatcher>() {
+internal class DispatcherHolderDelegate : HolderDelegate<ViewGroup, ViewGroupLifecycleDispatcher>() {
 
     private var root: ViewGroup? = null
 
-    override operator fun setValue(thisRef: Any, property: KProperty<*>, value: ViewGroupLifecycleDispatcher?) {
-        thisRef as? ViewGroup
-                ?: throw IllegalStateException("Only ViewGroups can have ViewGroupLifecycleDispatcher.")
-
+    override operator fun setValue(thisRef: ViewGroup,
+                                   property: KProperty<*>,
+                                   value: ViewGroupLifecycleDispatcher?) {
         val prevCount = values.size
         super.setValue(thisRef, property, value)
         val currentCount = values.size

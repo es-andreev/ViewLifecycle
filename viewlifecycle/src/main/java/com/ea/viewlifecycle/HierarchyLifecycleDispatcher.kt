@@ -51,8 +51,7 @@ internal class HierarchyLifecycleDispatcher(rootView: ViewGroup) : LifecycleDisp
         }
     }
 
-    override fun clear() {
-        super.clear()
+    internal fun clear() {
         viewGroups.forEach { it.setOnHierarchyChangeListener(null) }
         viewGroups.clear()
     }
@@ -79,6 +78,8 @@ internal class HierarchyLifecycleDispatcher(rootView: ViewGroup) : LifecycleDisp
         get() = getTag(R.id.subtree_dispatchers) as? Int ?: 0
         set(value) = setTag(R.id.subtree_dispatchers, maxOf(0, value))
 
+    // must take into account that zSortedViews may contain parents and children -
+    // level 0 views must have level 0 stem
     override fun buildLayoutLevels(): ArrayList<View> {
         return super.buildLayoutLevels().apply {
             forEach { view ->

@@ -4,6 +4,8 @@ import android.arch.lifecycle.*
 import android.content.ContextWrapper
 import android.graphics.Region
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.support.v4.app.FragmentActivity
 import android.support.v4.view.ViewCompat
 import android.view.View
@@ -35,6 +37,17 @@ private fun View.attachLifecycleOwner(): LifecycleOwner {
         return current
     }
 
+    // Special case when navigate methods are called multiple times (i.e. to form a back stack).
+    // View is created, added and immediately removed in a ViewGroup,
+    // not being attached to a window, so we need to quickly clear memory associated with it.
+    if (!ViewCompat.isAttachedToWindow(this)) {
+        mainHandler.postDelayed({
+            if (!ViewCompat.isAttachedToWindow(this)) {
+                destroy()
+            }
+        }, 100)
+    }
+
     return ViewLifecycleOwner(this).also {
         rawLifecycleOwner = it
     }
@@ -44,25 +57,6 @@ internal fun View.detachLifecycleOwner() {
     lifecycleOwner = ViewLifecycleOwnerDelegate.NullLifecycleOwner
     rawLifecycleOwner = null
 }
-
-/**
- * Mark a [ViewGroup] as a navigation container. After a configuration change,
- * if a ViewGroup with the same id is found in the hierarchy,
- * all its direct children will be restored.
- */
-fun ViewGroup.trackNavigation(track: Boolean = true) {
-    setTag(R.id.viewGroup_navigator, if (track) ViewGroupNavigator else null)
-
-    if (track) {
-        ensureParentLifecycleDispatcherAttached()
-
-        // ensure ViewCompanionFragment is attached
-        ViewCompanionFragment.getOrCreate(this)
-    }
-}
-
-internal val ViewGroup.isTrackingNavigation: Boolean
-    get() = getTag(R.id.viewGroup_navigator) === ViewGroupNavigator
 
 internal fun ViewGroup.attachViewGroupLifecycleDispatcher() {
     if (viewGroupLifecycleDispatcher != null) {
@@ -124,7 +118,8 @@ fun View.viewModelProvider(factory: ViewModelProvider.Factory? = null): ViewMode
  * Access arguments associated with a View.
  * The arguments are retained across configuration changes.
  */
-var View.arguments: Bundle? by HolderDelegate()
+@Suppress("unused")
+var View.arguments: Bundle? by FragmentHolderDelegate()
 
 internal fun View.destroy() {
     if (this is ViewGroup) {
@@ -165,7 +160,7 @@ internal val View.safeRoot: ViewGroup?
 
 internal var View.rawLifecycleOwner: ViewLifecycleOwner? by HolderDelegate()
 
-internal var View.viewGroupLifecycleDispatcher: ViewGroupLifecycleDispatcher?
+internal var ViewGroup.viewGroupLifecycleDispatcher: ViewGroupLifecycleDispatcher?
         by DispatcherHolderDelegate()
 
 internal var View.hierarchyLifecycleDispatcher: HierarchyLifecycleDispatcher? by HolderDelegate()
@@ -178,6 +173,10 @@ internal var View.visibleRegion: Region?
     get() = getTag(R.id.region) as? Region
     set(value) = setTag(R.id.region, value)
 
+internal var View.isBackStackItem: Boolean
+    get() = getTag(R.id.backStackItem) == true
+    set(value) = setTag(R.id.backStackItem, value)
+
 internal fun View.updateState(state: Lifecycle.State) {
     if (!state.isAtLeast(Lifecycle.State.STARTED) || level == 0 && isDisplayed) {
         rawLifecycleOwner?.lifecycle?.markState(state)
@@ -188,8 +187,6 @@ internal fun View.updateState(state: Lifecycle.State) {
 
 internal val View.isDisplayed: Boolean
     get() = ViewCompat.isAttachedToWindow(this) && visibility != View.GONE
-
-internal object ViewGroupNavigator
 
 internal val View.innerStem: ArrayList<ViewGroup>
     get() {
@@ -219,6 +216,12 @@ internal val View.fullStem: ArrayList<ViewGroup>
         return parents
     }
 
+internal val View.navCompanionFragmentTag: String
+    get() = "NavViewCompanionFragment for ${javaClass.canonicalName} : $id"
+
+internal val View.companionFragmentTag: String
+    get() = "ViewCompanionFragment for ${javaClass.canonicalName} : $id"
+
 internal inline fun <T : View> T.onAttached(crossinline callback: T.() -> Unit) {
     if (ViewCompat.isAttachedToWindow(this)) {
         callback()
@@ -236,3 +239,5 @@ internal inline fun <T : View> T.onAttached(crossinline callback: T.() -> Unit) 
         })
     }
 }
+
+private val mainHandler = Handler(Looper.getMainLooper())
