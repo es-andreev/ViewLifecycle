@@ -1,7 +1,7 @@
 package com.ea.viewlifecycle.sample.motionview
 
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.ea.viewlifecycle.sample.R
 
 class DialogActivity : AppCompatActivity() {

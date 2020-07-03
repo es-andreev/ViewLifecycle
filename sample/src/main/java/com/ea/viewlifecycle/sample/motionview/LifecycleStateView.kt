@@ -1,24 +1,24 @@
 package com.ea.viewlifecycle.sample.motionview
 
-import android.arch.lifecycle.GenericLifecycleObserver
-import android.arch.lifecycle.Lifecycle
-import android.arch.lifecycle.LifecycleOwner
-import android.arch.lifecycle.Observer
 import android.content.Context
 import android.graphics.Point
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
 import android.widget.FrameLayout
-import android.widget.TextView
+import androidx.appcompat.widget.AppCompatTextView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.Observer
 import com.ea.viewlifecycle.lifecycleOwner
 import com.ea.viewlifecycle.sample.R
 import com.ea.viewlifecycle.sample.activity
-import com.ea.viewlifecycle.viewModelProvider
+import com.ea.viewlifecycle.viewModels
 
-class LifecycleStateView : TextView, GenericLifecycleObserver {
+class LifecycleStateView : AppCompatTextView, LifecycleEventObserver {
 
-    private lateinit var viewModel: LifecycleStateViewModel
+    private val viewModel: LifecycleStateViewModel by viewModels()
 
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
@@ -57,7 +57,6 @@ class LifecycleStateView : TextView, GenericLifecycleObserver {
         val point = Point()
         display.getSize(point)
 
-        viewModel = viewModelProvider.get(LifecycleStateViewModel::class.java)
         viewModel.start(index, point, offset16)
         viewModel.liveLayoutParams.observe(lifecycleOwner, Observer {
             it?.apply {

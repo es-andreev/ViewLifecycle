@@ -1,9 +1,9 @@
 package com.ea.viewlifecycle.sample.motionview
 
-import android.arch.lifecycle.MutableLiveData
-import android.arch.lifecycle.ViewModel
 import android.graphics.Point
 import android.widget.FrameLayout
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import kotlin.math.min
 
 class LifecycleStateViewModel : ViewModel() {

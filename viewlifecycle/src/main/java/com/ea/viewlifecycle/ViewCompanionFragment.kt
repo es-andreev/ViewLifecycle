@@ -1,8 +1,8 @@
 package com.ea.viewlifecycle
 
-import android.arch.lifecycle.ViewModel
-import android.support.v4.app.Fragment
 import android.view.View
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModel
 
 /**
  * ViewCompanionFragment is used:
@@ -10,10 +10,10 @@ import android.view.View
  * - to access arguments.
  * Unique per pair [View.javaClass] + [View.getId].
  */
-internal class ViewCompanionFragment : Fragment() {
+ class ViewCompanionFragment : Fragment() {
 
     companion object {
-        internal fun getOrCreate(view: View): ViewCompanionFragment {
+        fun getOrCreate(view: View): ViewCompanionFragment {
             return get(view)
                     ?: ViewCompanionFragment().also {
                         view.activity.supportFragmentManager

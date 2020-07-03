@@ -3,9 +3,9 @@ package com.ea.viewlifecycle.sample
 import android.app.Activity
 import android.content.ContextWrapper
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
 import android.view.MenuItem
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import com.ea.viewlifecycle.BackStackNavigator
 import com.ea.viewlifecycle.Navigator
 import kotlinx.android.synthetic.main.activity_main.*
@@ -30,8 +30,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        if (item?.itemId == android.R.id.home) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == android.R.id.home) {
             return navigator.navigateBack()
         }
         return super.onOptionsItemSelected(item)

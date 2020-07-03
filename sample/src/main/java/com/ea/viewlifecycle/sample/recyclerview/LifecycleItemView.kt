@@ -1,18 +1,18 @@
 package com.ea.viewlifecycle.sample.recyclerview
 
-import android.arch.lifecycle.GenericLifecycleObserver
-import android.arch.lifecycle.Lifecycle
-import android.arch.lifecycle.LifecycleOwner
 import android.content.Context
 import android.util.AttributeSet
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.widget.LinearLayout
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import com.ea.viewlifecycle.lifecycleOwner
 import com.ea.viewlifecycle.sample.R
 import kotlinx.android.synthetic.main.view_lifecycle_item.view.*
 
-class LifecycleItemView : LinearLayout, GenericLifecycleObserver {
+class LifecycleItemView : LinearLayout, LifecycleEventObserver {
 
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)

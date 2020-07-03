@@ -1,7 +1,7 @@
 package com.ea.viewlifecycle
 
-import android.arch.lifecycle.LifecycleOwner
 import android.view.View
+import androidx.lifecycle.LifecycleOwner
 import java.util.*
 import kotlin.reflect.KProperty
 

@@ -1,11 +1,10 @@
 package com.ea.viewlifecycle
 
-import android.arch.lifecycle.GenericLifecycleObserver
-import android.arch.lifecycle.Lifecycle
-import android.arch.lifecycle.LifecycleOwner
-import android.arch.lifecycle.LifecycleRegistry
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
 
 internal sealed class ViewLifecycleRegistry(
         lifecycleOwner: LifecycleOwner,
@@ -13,12 +12,12 @@ internal sealed class ViewLifecycleRegistry(
 
     override fun handleLifecycleEvent(event: Event) {
         val state = getStateAfter(event)
-        markState(state)
+        currentState = state
     }
 
-    override fun markState(state: State) {
+    override fun setCurrentState(state: State) {
         try {
-            super.markState(state)
+            super.setCurrentState(state)
         } catch (e: IllegalArgumentException) {
             // This may happen when a view is created, but never actually attached to a window.
             // Its lifecycle then is destroyed while in INITIALIZED state and exception is thrown.
@@ -32,14 +31,14 @@ internal sealed class ViewLifecycleRegistry(
 
             if (!view.isBackStackItem) {
                 ViewCompanionFragment.get(view)?.apply {
-                    activity.supportFragmentManager
+                    requireActivity().supportFragmentManager
                             .beginTransaction()
                             .remove(this)
                             .commitAllowingStateLoss()
                 }
             }
             NavViewCompanionFragment.get(view)?.apply {
-                activity.supportFragmentManager
+                requireActivity().supportFragmentManager
                         .beginTransaction()
                         .remove(this)
                         .commitAllowingStateLoss()
@@ -47,7 +46,7 @@ internal sealed class ViewLifecycleRegistry(
         }
     }
 
-    private fun getStateAfter(event: Lifecycle.Event): Lifecycle.State {
+    private fun getStateAfter(event: Event): State {
         return when (event) {
             Event.ON_CREATE, Event.ON_STOP -> State.CREATED
             Event.ON_START, Event.ON_PAUSE -> State.STARTED
@@ -66,7 +65,7 @@ internal sealed class ViewLifecycleRegistry(
             lifecycleOwner: LifecycleOwner,
             private val view: View) : ViewLifecycleRegistry(lifecycleOwner, view) {
 
-        private val activityLifecycleObserver = GenericLifecycleObserver { _, event ->
+        private val activityLifecycleObserver = LifecycleEventObserver { _, event ->
             handleLifecycleEvent(event)
         }
 
@@ -74,12 +73,12 @@ internal sealed class ViewLifecycleRegistry(
             view.activity.lifecycle.addObserver(activityLifecycleObserver)
 
             view.onAttached {
-                markState(view.activity.lifecycle.currentState)
+                currentState = view.activity.lifecycle.currentState
             }
         }
 
-        override fun markState(state: Lifecycle.State) {
-            super.markState(state)
+        override fun setCurrentState(state: State) {
+            super.setCurrentState(state)
 
             view.hierarchyLifecycleDispatcher?.dispatchLifecycleState(state)
 

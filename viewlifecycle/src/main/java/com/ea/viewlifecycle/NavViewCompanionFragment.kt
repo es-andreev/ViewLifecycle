@@ -4,9 +4,9 @@ import android.content.Context
 import android.os.Bundle
 import android.os.Parcel
 import android.os.Parcelable
-import android.support.v4.app.Fragment
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 
 /**
  * NavViewCompanionFragment is a helper fragment and is bound to the owning View.
@@ -34,7 +34,7 @@ internal class NavViewCompanionFragment : Fragment() {
             }
 
             if (owningView == null) {
-                activity.supportFragmentManager
+                requireActivity().supportFragmentManager
                         .beginTransaction()
                         .remove(this)
                         .commitAllowingStateLoss()

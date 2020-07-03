@@ -1,15 +1,20 @@
 package com.ea.viewlifecycle
 
-import android.arch.lifecycle.*
 import android.content.ContextWrapper
 import android.graphics.Region
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.support.v4.app.FragmentActivity
-import android.support.v4.view.ViewCompat
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.MainThread
+import androidx.core.view.ViewCompat
+import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import java.util.*
 
 /**
@@ -92,27 +97,13 @@ internal fun ViewGroup.detachHierarchyLifecycleDispatcher() {
     }
 }
 
-/**
- * Obtain a [ViewModelProvider] associated with a View.
- */
-@Suppress("unused")
-val View.viewModelProvider: ViewModelProvider
-    get() = viewModelProvider(null)
-
-/**
- * Obtain a [ViewModelProvider] associated with a View.
- *
- * @param factory an optional ViewModelProvider.Factory for creating [ViewModel]s.
- */
-fun View.viewModelProvider(factory: ViewModelProvider.Factory? = null): ViewModelProvider {
-    val state = rawLifecycleOwner?.lifecycle?.currentState
-    if (state?.isAtLeast(Lifecycle.State.CREATED) != true) {
-        throw IllegalStateException("Cannot create ViewModelProvider until " +
-                "LifecycleOwner is in created state.")
-    }
-    val companionFragment = ViewCompanionFragment.getOrCreate(this)
-    return ViewModelProviders.of(companionFragment, factory)
-}
+@MainThread
+inline fun <reified VM : ViewModel> View.viewModels(
+        noinline viewModelScope: () -> View = { this },
+        noinline factoryProducer: (() -> ViewModelProvider.Factory)? = null
+) = ViewCompanionFragment.getOrCreate(this).viewModels<VM>(
+        { ViewCompanionFragment.getOrCreate(viewModelScope()) },
+        factoryProducer)
 
 /**
  * Access arguments associated with a View.
@@ -128,7 +119,7 @@ internal fun View.destroy() {
         }
     }
 
-    rawLifecycleOwner?.lifecycle?.markState(Lifecycle.State.DESTROYED)
+    rawLifecycleOwner?.lifecycle?.currentState = Lifecycle.State.DESTROYED
 }
 
 internal val View.safeActivity: FragmentActivity?
@@ -179,9 +170,9 @@ internal var View.isBackStackItem: Boolean
 
 internal fun View.updateState(state: Lifecycle.State) {
     if (!state.isAtLeast(Lifecycle.State.STARTED) || level == 0 && isDisplayed) {
-        rawLifecycleOwner?.lifecycle?.markState(state)
+        rawLifecycleOwner?.lifecycle?.currentState = state
     } else {
-        rawLifecycleOwner?.lifecycle?.markState(Lifecycle.State.CREATED)
+        rawLifecycleOwner?.lifecycle?.currentState = Lifecycle.State.CREATED
     }
 }
 

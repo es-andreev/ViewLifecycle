@@ -1,8 +1,8 @@
 package com.ea.viewlifecycle
 
-import android.arch.lifecycle.Lifecycle
 import android.graphics.Region
 import android.view.View
+import androidx.lifecycle.Lifecycle
 
 /**
  * Base class for dispatching lifecycle state.

@@ -1,14 +1,14 @@
 package com.ea.viewlifecycle.sample.motionview
 
-import android.arch.lifecycle.Lifecycle
-import android.arch.lifecycle.LifecycleObserver
-import android.arch.lifecycle.OnLifecycleEvent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.FrameLayout
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.OnLifecycleEvent
 import com.ea.viewlifecycle.lifecycleOwner
 import com.ea.viewlifecycle.sample.R
 import com.ea.viewlifecycle.sample.activity

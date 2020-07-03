@@ -1,6 +1,6 @@
 package com.ea.viewlifecycle
 
-import android.support.annotation.CallSuper
+import androidx.annotation.CallSuper
 import java.util.*
 import kotlin.reflect.KProperty
 

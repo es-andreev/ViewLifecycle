@@ -206,6 +206,7 @@ class BackStackNavigator(private val viewGroup: ViewGroup,
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     private data class BackStackItem(
             val name: String,
             val state: SparseArray<Parcelable>,
@@ -213,12 +214,12 @@ class BackStackNavigator(private val viewGroup: ViewGroup,
 
         var synchronizedWithView: Boolean = true
 
-        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS", "UNCHECKED_CAST")
         constructor(parcel: Parcel) : this(
-                parcel.readString(),
-                parcel.readSparseArray(BackStackItem::class.java.classLoader)
+                parcel.readString()!!,
+                parcel.readSparseArray<BackStackItem>(BackStackItem::class.java.classLoader)
                         as SparseArray<Parcelable>,
-                parcel.readString()) {
+                parcel.readString()!!
+        ) {
             synchronizedWithView = parcel.readByte() != 0.toByte()
         }
 

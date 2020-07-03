@@ -1,7 +1,7 @@
 package com.ea.viewlifecycle
 
-import android.arch.lifecycle.LifecycleOwner
 import android.view.View
+import androidx.lifecycle.LifecycleOwner
 
 /**
  * ViewLifecycleOwner is a special [LifecycleOwner] that is owned by a [View].
