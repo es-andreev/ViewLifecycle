@@ -7,10 +7,12 @@ Navigate with old well-known families of methods ViewGroup.addView and ViewGroup
 
 Add ViewLifecycle dependency
 ```
-implementation "com.eugene:viewlifecycle:1.1"
+implementation "ru.viewlifecycle:viewlifecycle:1.3-alpha"
 ```
+Use View extension function ```viewModels``` to create ViewModels.
+
 Use View extension property ```lifecycleOwner``` to access its lifecycle.
 
-Use ViewGroup extension function ```trackNavigation``` to save navigation stack. Its direct children will be restored after configuration change.
+Use ```BackStackNavigator(viewGroup)``` for back stack navigation.
 
 See [todo app sample](https://github.com/es-andreev/android-architecture/tree/todo-mvvm-live-kotlin-fragmentless) based on this library.
