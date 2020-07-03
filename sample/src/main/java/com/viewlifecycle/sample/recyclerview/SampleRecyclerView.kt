@@ -1,4 +1,4 @@
-package com.ea.viewlifecycle.sample.recyclerview
+package com.viewlifecycle.sample.recyclerview
 
 import android.content.Context
 import android.graphics.Color
@@ -13,9 +13,9 @@ import androidx.lifecycle.OnLifecycleEvent
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.ea.viewlifecycle.lifecycleOwner
-import com.ea.viewlifecycle.sample.R
-import com.ea.viewlifecycle.sample.activity
+import com.viewlifecycle.lifecycleOwner
+import com.viewlifecycle.sample.R
+import com.viewlifecycle.sample.activity
 import kotlinx.android.synthetic.main.view_sample_recycler.view.*
 
 class SampleRecyclerView : FrameLayout, LifecycleObserver {

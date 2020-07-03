@@ -1,4 +1,4 @@
-package com.ea.viewlifecycle.sample
+package com.viewlifecycle.sample
 
 import android.app.Activity
 import android.content.ContextWrapper
@@ -6,8 +6,8 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import com.ea.viewlifecycle.BackStackNavigator
-import com.ea.viewlifecycle.Navigator
+import com.viewlifecycle.BackStackNavigator
+import com.viewlifecycle.Navigator
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {

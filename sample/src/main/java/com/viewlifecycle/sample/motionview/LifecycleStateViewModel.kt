@@ -1,4 +1,4 @@
-package com.ea.viewlifecycle.sample.motionview
+package com.viewlifecycle.sample.motionview
 
 import android.graphics.Point
 import android.widget.FrameLayout

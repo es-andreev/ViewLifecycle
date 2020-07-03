@@ -1,4 +1,4 @@
-package com.ea.viewlifecycle.sample
+package com.viewlifecycle.sample
 
 import android.content.Context
 import android.util.AttributeSet
@@ -7,9 +7,9 @@ import android.widget.LinearLayout
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
-import com.ea.viewlifecycle.lifecycleOwner
-import com.ea.viewlifecycle.sample.motionview.SampleMotionView
-import com.ea.viewlifecycle.sample.recyclerview.SampleRecyclerView
+import com.viewlifecycle.lifecycleOwner
+import com.viewlifecycle.sample.motionview.SampleMotionView
+import com.viewlifecycle.sample.recyclerview.SampleRecyclerView
 import kotlinx.android.synthetic.main.view_main.view.*
 
 class MainView : LinearLayout, LifecycleObserver {

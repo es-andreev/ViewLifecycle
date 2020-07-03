@@ -1,4 +1,4 @@
-package com.ea.viewlifecycle
+package com.viewlifecycle
 
 import android.view.View
 import android.view.ViewGroup

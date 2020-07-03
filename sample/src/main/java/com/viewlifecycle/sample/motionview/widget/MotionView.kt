@@ -1,4 +1,4 @@
-package com.ea.viewlifecycle.sample.motionview.widget
+package com.viewlifecycle.sample.motionview.widget
 
 import android.content.Context
 import android.graphics.Matrix

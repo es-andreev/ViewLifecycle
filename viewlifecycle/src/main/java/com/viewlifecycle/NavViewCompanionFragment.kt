@@ -1,4 +1,4 @@
-package com.ea.viewlifecycle
+package com.viewlifecycle
 
 import android.content.Context
 import android.os.Bundle

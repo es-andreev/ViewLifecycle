@@ -1,4 +1,4 @@
-package com.ea.viewlifecycle
+package com.viewlifecycle
 
 import androidx.annotation.CallSuper
 import java.util.*

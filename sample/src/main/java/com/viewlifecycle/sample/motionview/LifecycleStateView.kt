@@ -1,4 +1,4 @@
-package com.ea.viewlifecycle.sample.motionview
+package com.viewlifecycle.sample.motionview
 
 import android.content.Context
 import android.graphics.Point
@@ -11,10 +11,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
-import com.ea.viewlifecycle.lifecycleOwner
-import com.ea.viewlifecycle.sample.R
-import com.ea.viewlifecycle.sample.activity
-import com.ea.viewlifecycle.viewModels
+import com.viewlifecycle.lifecycleOwner
+import com.viewlifecycle.sample.R
+import com.viewlifecycle.sample.activity
+import com.viewlifecycle.viewModels
 
 class LifecycleStateView : AppCompatTextView, LifecycleEventObserver {
 

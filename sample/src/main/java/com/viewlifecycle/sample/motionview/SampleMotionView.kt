@@ -1,4 +1,4 @@
-package com.ea.viewlifecycle.sample.motionview
+package com.viewlifecycle.sample.motionview
 
 import android.content.Context
 import android.content.Intent
@@ -9,9 +9,9 @@ import android.widget.FrameLayout
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
-import com.ea.viewlifecycle.lifecycleOwner
-import com.ea.viewlifecycle.sample.R
-import com.ea.viewlifecycle.sample.activity
+import com.viewlifecycle.lifecycleOwner
+import com.viewlifecycle.sample.R
+import com.viewlifecycle.sample.activity
 import kotlinx.android.synthetic.main.view_sample_motion.view.*
 
 class SampleMotionView : FrameLayout, LifecycleObserver {

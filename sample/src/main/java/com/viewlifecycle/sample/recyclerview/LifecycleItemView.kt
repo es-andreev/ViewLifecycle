@@ -1,4 +1,4 @@
-package com.ea.viewlifecycle.sample.recyclerview
+package com.viewlifecycle.sample.recyclerview
 
 import android.content.Context
 import android.util.AttributeSet
@@ -8,8 +8,8 @@ import android.widget.LinearLayout
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
-import com.ea.viewlifecycle.lifecycleOwner
-import com.ea.viewlifecycle.sample.R
+import com.viewlifecycle.lifecycleOwner
+import com.viewlifecycle.sample.R
 import kotlinx.android.synthetic.main.view_lifecycle_item.view.*
 
 class LifecycleItemView : LinearLayout, LifecycleEventObserver {

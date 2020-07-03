@@ -5,7 +5,7 @@ apply plugin: "kotlin-android-extensions"
 android {
     compileSdkVersion 29
     defaultConfig {
-        applicationId "com.ea.viewlifecycle.sample"
+        applicationId "com.viewlifecycle.sample"
         minSdkVersion 21
         targetSdkVersion 29
         versionCode 1
