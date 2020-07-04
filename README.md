@@ -8,7 +8,7 @@ Navigation and back stack are managed by ```BackStackNavigator``` across configu
 
 Add ViewLifecycle dependency
 ```
-implementation "ru.viewlifecycle:viewlifecycle:1.3-alpha"
+implementation "ru.viewlifecycle:viewlifecycle:1.12-alpha"
 ```
 View extensions provided:
 * ```viewModels()``` for creating ViewModels
