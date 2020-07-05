@@ -10,11 +10,7 @@ import android.view.ViewGroup
 import androidx.annotation.MainThread
 import androidx.core.view.ViewCompat
 import androidx.fragment.app.FragmentActivity
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.*
 import java.util.*
 
 /**
@@ -97,13 +93,42 @@ internal fun ViewGroup.detachHierarchyLifecycleDispatcher() {
     }
 }
 
+/**
+ * Returns a property delegate to access [ViewModel] by **default** scoped to this [View]:
+ * ```
+ * class MyView : View {
+ *     val viewmodel: MYViewModel by viewModels()
+ * }
+ * ```
+ *
+ * Custom [ViewModelProvider.Factory] can be defined via [factoryProducer] parameter,
+ * factory returned by it will be used to create [ViewModel]:
+ * ```
+ * class MyView : View() {
+ *     val viewmodel: MYViewModel by viewModels { myFactory }
+ * }
+ * ```
+ *
+ * Default scope may be overridden with parameter [viewModelScope]:
+ * ```
+ * class MyView : View() {
+ *     val viewmodel: MYViewModel by viewModels ({parent as View})
+ * }
+ * ```
+ */
 @MainThread
 inline fun <reified VM : ViewModel> View.viewModels(
         noinline viewModelScope: () -> View = { this },
         noinline factoryProducer: (() -> ViewModelProvider.Factory)? = null
-) = ViewCompanionFragment.getOrCreate(this).viewModels<VM>(
-        { ViewCompanionFragment.getOrCreate(viewModelScope()) },
-        factoryProducer)
+): Lazy<VM> {
+    val storeProducer = {
+        ViewCompanionFragment.getOrCreate(viewModelScope()).viewModelStore
+    }
+    val factoryPromise = factoryProducer ?: {
+        ViewCompanionFragment.getOrCreate(this).defaultViewModelProviderFactory
+    }
+    return ViewModelLazy(VM::class, storeProducer, factoryPromise)
+}
 
 /**
  * Access arguments associated with a View.

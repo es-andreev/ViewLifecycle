@@ -10,7 +10,7 @@ import androidx.lifecycle.ViewModel
  * - to access arguments.
  * Unique per pair [View.javaClass] + [View.getId].
  */
- class ViewCompanionFragment : Fragment() {
+class ViewCompanionFragment : Fragment() {
 
     companion object {
         fun getOrCreate(view: View): ViewCompanionFragment {

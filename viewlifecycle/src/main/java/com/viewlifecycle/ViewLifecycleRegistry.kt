@@ -2,6 +2,7 @@ package com.viewlifecycle
 
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.ViewCompat
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -29,19 +30,22 @@ internal sealed class ViewLifecycleRegistry(
             (view as? ViewGroup)?.detachViewGroupLifecycleDispatcher()
             view.detachLifecycleOwner()
 
-            if (!view.isBackStackItem) {
-                ViewCompanionFragment.get(view)?.apply {
+            // activity is finishing, or view was removed from parent
+            if (view.safeActivity?.isFinishing == true || !ViewCompat.isAttachedToWindow(view)) {
+                if (!view.isBackStackItem) {
+                    ViewCompanionFragment.get(view)?.apply {
+                        requireActivity().supportFragmentManager
+                                .beginTransaction()
+                                .remove(this)
+                                .commitAllowingStateLoss()
+                    }
+                }
+                NavViewCompanionFragment.get(view)?.apply {
                     requireActivity().supportFragmentManager
                             .beginTransaction()
                             .remove(this)
                             .commitAllowingStateLoss()
                 }
-            }
-            NavViewCompanionFragment.get(view)?.apply {
-                requireActivity().supportFragmentManager
-                        .beginTransaction()
-                        .remove(this)
-                        .commitAllowingStateLoss()
             }
         }
     }
