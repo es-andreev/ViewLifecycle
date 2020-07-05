@@ -5,7 +5,7 @@ apply plugin: 'com.jfrog.bintray'
 
 ext {
     publishedGroupId = 'ru.viewlifecycle'
-    libraryVersion = '1.12-alpha'
+    libraryVersion = '1.13-alpha'
 }
 
 android {
