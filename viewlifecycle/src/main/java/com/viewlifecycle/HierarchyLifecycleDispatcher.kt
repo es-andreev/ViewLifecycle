@@ -2,6 +2,7 @@ package com.viewlifecycle
 
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.Lifecycle
 import java.util.*
 
 /**
@@ -15,7 +16,11 @@ internal class HierarchyLifecycleDispatcher(rootView: ViewGroup) : LifecycleDisp
 
     private val stemChangeListener = object : ViewGroup.OnHierarchyChangeListener {
         override fun onChildViewRemoved(parent: View?, child: View?) {
-            child?.destroy()
+            if (child?.isReusable != true) {
+                child?.destroy()
+            } else {
+                child.updateState(Lifecycle.State.CREATED)
+            }
 
             if (child is ViewGroup && child.subtreeDispatchers > 0) {
                 parent?.innerStem?.forEach {

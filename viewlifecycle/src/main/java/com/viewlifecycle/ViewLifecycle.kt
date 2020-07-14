@@ -193,6 +193,17 @@ internal var View.isBackStackItem: Boolean
     get() = getTag(R.id.backStackItem) == true
     set(value) = setTag(R.id.backStackItem, value)
 
+var View.isReusable: Boolean
+    get() = getTag(R.id.backStackItem) == true
+    set(value) {
+        setTag(R.id.backStackItem, value)
+        if (!value) {
+            if (rawLifecycleOwner?.lifecycle?.currentState == Lifecycle.State.CREATED) {
+                destroy()
+            }
+        }
+    }
+
 internal fun View.updateState(state: Lifecycle.State) {
     if (!state.isAtLeast(Lifecycle.State.STARTED) || level == 0 && isDisplayed) {
         rawLifecycleOwner?.lifecycle?.currentState = state
