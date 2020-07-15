@@ -70,12 +70,12 @@ class BackStackNavigator(private val viewGroup: ViewGroup,
     }
 
     private fun saveState(bundle: Bundle) {
-        bundle.putParcelable(STATE_ITEMS, backStackItems)
+        bundle.putParcelable(viewGroup.backStackStateId, backStackItems)
     }
 
     private fun restoreState(bundle: Bundle) {
         @Suppress("UNCHECKED_CAST")
-        backStackItems = bundle.getParcelable(STATE_ITEMS) as? BackStack
+        backStackItems = bundle.getParcelable(viewGroup.backStackStateId) as? BackStack
                 ?: BackStack()
     }
 
@@ -306,7 +306,11 @@ class BackStackNavigator(private val viewGroup: ViewGroup,
         }
     }
 
-    companion object {
-        const val STATE_ITEMS = "STATE_ITEMS"
-    }
+    private val View.backStackStateId: String
+        get() {
+            if (id == View.NO_ID) {
+                throw IllegalStateException("View must have id.")
+            }
+            return "STATE_STACK_$id"
+        }
 }
