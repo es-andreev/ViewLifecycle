@@ -35,6 +35,8 @@ internal abstract class LifecycleDispatcher(private val view: View) {
         dispatchLifecycleState(currentState)
     }
 
+    protected abstract fun View.saveRegion(region: Region, sameLevelRegion: Region)
+
     protected open fun buildLayoutLevels(): ArrayList<View> {
         val zSortedViews = getZSortedViews()
 
@@ -48,9 +50,7 @@ internal abstract class LifecycleDispatcher(private val view: View) {
             val viewLevel = it.findLevel(levels)
 
             if (viewLevel.level < levels.size) {
-                it.visibleRegion = Region(viewLevel.region).apply {
-                    op(levels[viewLevel.level], Region.Op.DIFFERENCE)
-                }
+                it.saveRegion(viewLevel.region, levels[viewLevel.level])
             }
 
             it.level = viewLevel.level + parentLevel

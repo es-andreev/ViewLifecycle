@@ -1,5 +1,6 @@
 package com.viewlifecycle
 
+import android.graphics.Region
 import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.Lifecycle
@@ -59,6 +60,10 @@ internal class HierarchyLifecycleDispatcher(rootView: ViewGroup) : LifecycleDisp
     internal fun clear() {
         viewGroups.forEach { it.setOnHierarchyChangeListener(null) }
         viewGroups.clear()
+    }
+
+    override fun View.saveRegion(region: Region, sameLevelRegion: Region) {
+        visibleRegion = Region(region)
     }
 
     override fun getZSortedViews(): Collection<View> {

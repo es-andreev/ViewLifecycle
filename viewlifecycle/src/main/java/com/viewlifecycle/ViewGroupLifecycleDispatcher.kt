@@ -1,5 +1,6 @@
 package com.viewlifecycle
 
+import android.graphics.Region
 import android.os.Build
 import android.view.View
 import android.view.ViewGroup
@@ -22,6 +23,12 @@ internal class ViewGroupLifecycleDispatcher(
 
     internal fun clear() {
         viewGroup.removeOnLayoutChangeListener(layoutListener)
+    }
+
+    override fun View.saveRegion(region: Region, sameLevelRegion: Region) {
+        visibleRegion = Region(region).apply {
+            op(sameLevelRegion, Region.Op.DIFFERENCE)
+        }
     }
 
     override fun getZSortedViews(): Collection<View> {
