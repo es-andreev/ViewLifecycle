@@ -5,6 +5,7 @@ import android.graphics.Region
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.MainThread
@@ -193,6 +194,14 @@ internal var View.isBackStackItem: Boolean
     get() = getTag(R.id.backStackItem) == true
     set(value) = setTag(R.id.backStackItem, value)
 
+internal var View.isDisplayedTag: Boolean?
+    get() = getTag(R.id.displayed) as? Boolean
+    set(value) = setTag(R.id.displayed, value)
+
+internal var View.visibilityTag: Int?
+    get() = getTag(R.id.visibility) as? Int
+    set(value) = setTag(R.id.visibility, value)
+
 var View.isReusable: Boolean
     get() = getTag(R.id.backStackItem) == true
     set(value) {
@@ -213,7 +222,14 @@ internal fun View.updateState(state: Lifecycle.State) {
 }
 
 internal val View.isDisplayed: Boolean
-    get() = ViewCompat.isAttachedToWindow(this) && visibility != View.GONE
+    get() {
+        if (!ViewCompat.isAttachedToWindow(this)) {
+            return false
+        }
+        return innerStem.plus(this).all {
+            it.visibility != View.GONE
+        }
+    }
 
 internal val View.innerStem: ArrayList<ViewGroup>
     get() {
@@ -268,3 +284,34 @@ internal inline fun <T : View> T.onAttached(crossinline callback: T.() -> Unit) 
 }
 
 private val mainHandler = Handler(Looper.getMainLooper())
+
+fun View.debugViewLifecycle() {
+    isDisplayedTag = isDisplayed
+    visibilityTag = visibility
+    viewTreeObserver.addOnGlobalLayoutListener {
+        val _isDisplayed = isDisplayed
+        if (rawLifecycleOwner != null && isDisplayedTag != _isDisplayed) {
+            isDisplayedTag = _isDisplayed
+            if (visibilityTag == visibility) {
+                if (_isDisplayed) {
+                    innerStem.forEach {
+                        if (it.visibility == View.VISIBLE && (it.parent as? ViewGroup)?.viewGroupLifecycleDispatcher == null) {
+                            Log.v("ViewLifecycle", "$this became visible on screen, " +
+                                    "but its visibility property was not changed, " +
+                                    "so if it did not receive appropriate lifecycle event, " +
+                                    "look for its parent that became visible and call View.lifecycleOwner on it.")
+                        }
+                    }
+                } else {
+                    innerStem.forEach {
+                        if (it.visibility == View.GONE && (it.parent as? ViewGroup)?.viewGroupLifecycleDispatcher == null) {
+                            Log.w("ViewLifecycle", "$it became GONE, call View.lifecycleOwner on it so " +
+                                    "it can affect the lifecycle of $this.")
+                        }
+                    }
+                }
+            }
+            visibilityTag = visibility
+        }
+    }
+}
