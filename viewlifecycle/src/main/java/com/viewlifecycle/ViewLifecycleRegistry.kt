@@ -27,6 +27,7 @@ internal sealed class ViewLifecycleRegistry(
         (view as? ViewGroup)?.viewGroupLifecycleDispatcher?.dispatchLifecycleState(state)
 
         if (state == State.DESTROYED) {
+            view.arguments = null
             (view as? ViewGroup)?.detachViewGroupLifecycleDispatcher()
             view.detachLifecycleOwner()
 

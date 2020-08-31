@@ -119,8 +119,8 @@ internal fun ViewGroup.detachHierarchyLifecycleDispatcher() {
  */
 @MainThread
 inline fun <reified VM : ViewModel> View.viewModels(
-        noinline viewModelScope: () -> View = { this },
-        noinline factoryProducer: (() -> ViewModelProvider.Factory)? = null
+    noinline viewModelScope: () -> View = { this },
+    noinline factoryProducer: (() -> ViewModelProvider.Factory)? = null
 ): Lazy<VM> {
     val storeProducer = {
         ViewCompanionFragment.getOrCreate(viewModelScope()).viewModelStore
@@ -145,7 +145,7 @@ internal fun View.destroy() {
         }
     }
 
-    rawLifecycleOwner?.lifecycle?.currentState = Lifecycle.State.DESTROYED
+    updateState(Lifecycle.State.DESTROYED)
 }
 
 internal val View.safeActivity: FragmentActivity?
@@ -160,7 +160,7 @@ internal val View.safeActivity: FragmentActivity?
 
 internal val View.activity: FragmentActivity
     get() = safeActivity
-            ?: throw IllegalStateException("Could not find FragmentActivity for $this.")
+        ?: throw IllegalStateException("Could not find FragmentActivity for $this.")
 
 internal val View.safeRoot: ViewGroup?
     get() {
@@ -203,9 +203,9 @@ internal var View.visibilityTag: Int?
     set(value) = setTag(R.id.visibility, value)
 
 var View.isReusable: Boolean
-    get() = getTag(R.id.backStackItem) == true
+    get() = getTag(R.id.reusable) == true
     set(value) {
-        setTag(R.id.backStackItem, value)
+        setTag(R.id.reusable, value)
         if (!value) {
             if (rawLifecycleOwner?.lifecycle?.currentState == Lifecycle.State.CREATED) {
                 destroy()

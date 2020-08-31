@@ -1,6 +1,7 @@
 package com.viewlifecycle
 
 import android.view.View
+import androidx.core.view.ViewCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
 
@@ -16,6 +17,10 @@ class ViewCompanionFragment : Fragment() {
         fun getOrCreate(view: View): ViewCompanionFragment {
             return get(view)
                     ?: ViewCompanionFragment().also {
+                        if (view.id == View.NO_ID) {
+                            view.id = ViewCompat.generateViewId()
+                        }
+
                         view.activity.supportFragmentManager
                                 .beginTransaction()
                                 .add(it, view.companionFragmentTag)

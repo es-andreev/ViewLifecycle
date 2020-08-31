@@ -9,6 +9,9 @@ import android.os.Parcelable
 import android.util.SparseArray
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.OnLifecycleEvent
 import java.util.*
 
 /**
@@ -63,6 +66,15 @@ class BackStackNavigator(private val viewGroup: ViewGroup,
         app.registerActivityLifecycleCallbacks(activityCallbacks)
 
         NavViewCompanionFragment.getOrCreate(viewGroup)
+        viewGroup.lifecycleOwner.lifecycle.addObserver(object : LifecycleObserver {
+            @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+            fun onDestroy() {
+                app.unregisterActivityLifecycleCallbacks(activityCallbacks)
+                for (i in 0 until viewGroup.childCount) {
+                    viewGroup.getChildAt(i)?.isBackStackItem = false
+                }
+            }
+        })
 
         if (savedInstanceState != null) {
             restoreState(savedInstanceState)
@@ -167,9 +179,11 @@ class BackStackNavigator(private val viewGroup: ViewGroup,
         }
     }
 
-    override fun navigateReplaceAll(view: View) {
+    override fun navigateReplaceAll(view: View?) {
         viewGroup.removeAllViews()
-        viewGroup.addView(view)
+        if (view != null) {
+            viewGroup.addView(view)
+        }
 
         while (backStackItems.isNotEmpty()) {
             backStackItems.removeLast()?.apply {
@@ -186,7 +200,7 @@ class BackStackNavigator(private val viewGroup: ViewGroup,
                 val viewClass = Class.forName(previousItem.name)
                 val view = viewClass.getConstructor(Context::class.java)
                         .newInstance(viewGroup.context) as View
-
+                view.id = previousItem.id
                 view.restoreHierarchyState(previousItem.state)
                 viewGroup.addView(view)
             }
@@ -209,6 +223,7 @@ class BackStackNavigator(private val viewGroup: ViewGroup,
     @Suppress("UNCHECKED_CAST")
     private data class BackStackItem(
             val name: String,
+            val id: Int,
             val state: SparseArray<Parcelable>,
             val companionFragmentTag: String) : Parcelable {
 
@@ -216,6 +231,7 @@ class BackStackNavigator(private val viewGroup: ViewGroup,
 
         constructor(parcel: Parcel) : this(
                 parcel.readString()!!,
+                parcel.readInt(),
                 parcel.readSparseArray<BackStackItem>(BackStackItem::class.java.classLoader)
                         as SparseArray<Parcelable>,
                 parcel.readString()!!
@@ -225,6 +241,7 @@ class BackStackNavigator(private val viewGroup: ViewGroup,
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
             parcel.writeString(name)
+            parcel.writeInt(id)
             @Suppress("UNCHECKED_CAST")
             parcel.writeSparseArray(state as SparseArray<Any>)
             parcel.writeString(companionFragmentTag)
@@ -250,7 +267,7 @@ class BackStackNavigator(private val viewGroup: ViewGroup,
                 val stateContainer = SparseArray<Parcelable>()
                 view.saveHierarchyState(stateContainer)
 
-                return BackStackItem(className, stateContainer, view.companionFragmentTag)
+                return BackStackItem(className, view.id, stateContainer, view.companionFragmentTag)
             }
         }
     }

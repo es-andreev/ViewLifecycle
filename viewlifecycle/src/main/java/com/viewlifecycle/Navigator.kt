@@ -50,5 +50,5 @@ interface Navigator {
     /**
      * Adds a [view], removes all current views and drops the whole back stack.
      */
-    fun navigateReplaceAll(view: View)
+    fun navigateReplaceAll(view: View?)
 }

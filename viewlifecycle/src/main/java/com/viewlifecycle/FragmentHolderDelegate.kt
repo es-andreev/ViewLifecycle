@@ -13,8 +13,10 @@ internal class FragmentHolderDelegate : HolderDelegate<View, Bundle>() {
     override operator fun setValue(thisRef: View, property: KProperty<*>, value: Bundle?) {
         super.setValue(thisRef, property, value)
 
-        thisRef.onAttached {
-            ViewCompanionFragment.getOrCreate(this).arguments = value
+        if (value != null) {
+            thisRef.onAttached {
+                ViewCompanionFragment.getOrCreate(this).arguments = value
+            }
         }
     }
 }
